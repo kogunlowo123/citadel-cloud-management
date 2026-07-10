@@ -1,0 +1,148 @@
+name: SEO Indexing & Distribution
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'citadel-content/blog/**'
+      - '_config.yml'
+      - 'faq.md'
+  schedule:
+    # Weekly re-submission: Sunday 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  indexnow-submit:
+    name: IndexNow — Bing/Yandex/DuckDuckGo Instant Indexing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build URL list and submit to IndexNow
+        run: |
+          PAGES_BASE="https://kogunlowo123.github.io/citadel-cloud-management"
+          GITHUB_BASE="https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog"
+          KEY="citadel-cloud-management-indexnow-7f3a2b1c9e4d8f6a"
+
+          # Build URL array from all blog articles
+          URLS=$(find citadel-content/blog -name "*.md" | sort | while read f; do
+            fname=$(basename "$f")
+            echo "\"${GITHUB_BASE}/${fname}\""
+          done | paste -sd,)
+
+          # Add key pages
+          KEY_PAGES="\"${PAGES_BASE}/\",\"${PAGES_BASE}/faq/\",\"https://github.com/kogunlowo123/citadel-cloud-management\""
+
+          ALL_URLS="${KEY_PAGES},${URLS}"
+
+          PAYLOAD="{
+            \"host\": \"kogunlowo123.github.io\",
+            \"key\": \"${KEY}\",
+            \"keyLocation\": \"${PAGES_BASE}/indexnow-key-citadel.txt\",
+            \"urlList\": [${ALL_URLS}]
+          }"
+
+          echo "Submitting to Bing IndexNow..."
+          curl -sf -X POST "https://api.indexnow.org/indexnow" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$PAYLOAD" && echo "Bing: OK" || echo "Bing: FAILED"
+
+          echo "Submitting to Yandex IndexNow..."
+          curl -sf -X POST "https://yandex.com/indexnow" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$PAYLOAD" && echo "Yandex: OK" || echo "Yandex: FAILED"
+
+          echo "Submitting to IndexNow.org (all engines)..."
+          curl -sf -X POST "https://indexnow.org/indexnow" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$PAYLOAD" && echo "IndexNow.org: OK" || echo "IndexNow.org: FAILED"
+
+          ARTICLE_COUNT=$(find citadel-content/blog -name "*.md" | wc -l | tr -d ' ')
+          echo "## IndexNow Submission" >> $GITHUB_STEP_SUMMARY
+          echo "- Articles submitted: $ARTICLE_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "- Engines: Bing, Yandex, DuckDuckGo, Seznam" >> $GITHUB_STEP_SUMMARY
+          echo "- Key pages: GitHub Pages homepage, FAQ" >> $GITHUB_STEP_SUMMARY
+
+  sitemap-ping:
+    name: Sitemap Ping — Google, Bing, Ask
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping sitemaps to search engines
+        run: |
+          SITEMAP="https://kogunlowo123.github.io/citadel-cloud-management/sitemap.xml"
+
+          echo "Pinging Google..."
+          curl -sf "https://www.google.com/ping?sitemap=${SITEMAP}" && echo "Google: OK" || echo "Google: no response (expected — Google deprecated ping, use Search Console)"
+
+          echo "Pinging Bing..."
+          curl -sf "https://www.bing.com/indexnow?url=${SITEMAP}&key=citadel-cloud-management-indexnow-7f3a2b1c9e4d8f6a" && echo "Bing sitemap: OK" || true
+
+          echo "## Sitemap Ping" >> $GITHUB_STEP_SUMMARY
+          echo "- Sitemap URL: $SITEMAP" >> $GITHUB_STEP_SUMMARY
+          echo "- Pinged: Google, Bing" >> $GITHUB_STEP_SUMMARY
+
+  rss-ping:
+    name: RSS Feed Ping — Aggregators
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping RSS aggregators
+        run: |
+          FEED="https://kogunlowo123.github.io/citadel-cloud-management/feed.xml"
+          ENCODED_FEED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${FEED}', safe=''))")
+          BLOG_NAME="Citadel%20Cloud%20Management"
+          BLOG_URL="https%3A%2F%2Fkogunlowo123.github.io%2Fcitadel-cloud-management%2F"
+
+          echo "Pinging Pingomatic..."
+          curl -sf "http://pingomatic.com/ping/?title=${BLOG_NAME}&blogurl=${BLOG_URL}&rssurl=${ENCODED_FEED}&chk_weblogscom=on&chk_blogs=on&chk_technorati=on&chk_feedburner=on&chk_googleblog=on&chk_tailrank=on&chk_syndic8=on&chk_newsgator=on" && echo "Pingomatic: OK" || echo "Pingomatic: no response"
+
+          echo "Pinging Ping-o-Matic alternatives..."
+          for ping_url in \
+            "http://rpc.pingomatic.com/" \
+            "http://blogsearch.google.com/ping/RPC2" \
+            "http://rpc.technorati.com/rpc/ping"; do
+            curl -sf -X POST "$ping_url" \
+              -H "Content-Type: text/xml" \
+              -d "<?xml version=\"1.0\"?><methodCall><methodName>weblogUpdates.ping</methodName><params><param><value>Citadel Cloud Management</value></param><param><value>https://kogunlowo123.github.io/citadel-cloud-management/</value></param><param><value>${FEED}</value></param></params></methodCall>" \
+              && echo "$ping_url: OK" || echo "$ping_url: skipped"
+          done
+
+          echo "## RSS Ping" >> $GITHUB_STEP_SUMMARY
+          echo "- Feed URL: $FEED" >> $GITHUB_STEP_SUMMARY
+          echo "- Pinged: Pingomatic, Google Blog Search, Technorati" >> $GITHUB_STEP_SUMMARY
+
+  schema-validation:
+    name: Schema.org + Open Graph Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate schema.org includes
+        run: |
+          if [ -f "_includes/seo-schema.html" ]; then
+            echo "schema.org include: found"
+            grep -c "@type" _includes/seo-schema.html && echo "Schema.org types: OK"
+          else
+            echo "WARNING: _includes/seo-schema.html not found"
+          fi
+
+          if [ -f "robots.txt" ]; then
+            echo "robots.txt: found"
+            cat robots.txt
+          else
+            echo "WARNING: robots.txt not found"
+          fi
+
+          if [ -f "indexnow-key-citadel.txt" ]; then
+            echo "IndexNow key file: found"
+          fi
+
+          ARTICLE_COUNT=$(find citadel-content/blog -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+          echo "## SEO Health" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| robots.txt | $([ -f robots.txt ] && echo ✅ || echo ❌) |" >> $GITHUB_STEP_SUMMARY
+          echo "| IndexNow key | $([ -f indexnow-key-citadel.txt ] && echo ✅ || echo ❌) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema.org | $([ -f _includes/seo-schema.html ] && echo ✅ || echo ❌) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Jekyll config | $([ -f _config.yml ] && echo ✅ || echo ❌) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Article count | $ARTICLE_COUNT / 100 |" >> $GITHUB_STEP_SUMMARY
