@@ -1,0 +1,162 @@
+name: Global Distribution Pipeline
+
+on:
+  schedule:
+    # Run every Monday at 09:00 UTC (best posting time)
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      article_slug:
+        description: 'Specific article slug to distribute (leave empty for auto-select)'
+        required: false
+      platforms:
+        description: 'Platforms to publish to (all / devto / hashnode / medium)'
+        required: false
+        default: 'all'
+
+jobs:
+  select-article:
+    name: Select Article for Distribution
+    runs-on: ubuntu-latest
+    outputs:
+      article_file: ${{ steps.select.outputs.article_file }}
+      article_title: ${{ steps.select.outputs.article_title }}
+      article_slug: ${{ steps.select.outputs.article_slug }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select highest-value article
+        id: select
+        run: |
+          if [ -n "${{ inputs.article_slug }}" ]; then
+            FILE=$(find citadel-content/blog -name "*${{ inputs.article_slug }}*" | head -1)
+          else
+            # Auto-select: rotate through articles not yet distributed
+            # Priority: Bedrock RAG, EKS, Security Baseline, BigQuery
+            PRIORITY_LIST=(
+              "30-aws-bedrock-rag-terraform.md"
+              "01-production-vpc-terraform.md"
+              "09-bedrock-ai-agents-terraform.md"
+              "35-gcp-bigquery-analytics-terraform.md"
+              "08-aws-security-baseline-devsecops.md"
+              "02-azure-aks-enterprise.md"
+              "40-gitops-argocd-terraform.md"
+              "31-aws-ecs-fargate-terraform.md"
+            )
+            WEEK_NUM=$(date +%V)
+            IDX=$((WEEK_NUM % ${#PRIORITY_LIST[@]}))
+            FILE="citadel-content/blog/${PRIORITY_LIST[$IDX]}"
+          fi
+
+          TITLE=$(grep "^# " "$FILE" | head -1 | sed 's/^# //')
+          SLUG=$(basename "$FILE" .md)
+
+          echo "article_file=$FILE" >> $GITHUB_OUTPUT
+          echo "article_title=$TITLE" >> $GITHUB_OUTPUT
+          echo "article_slug=$SLUG" >> $GITHUB_OUTPUT
+
+          echo "Selected: $FILE"
+          echo "Title: $TITLE"
+
+  publish-devto:
+    name: Publish to Dev.to
+    runs-on: ubuntu-latest
+    needs: select-article
+    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'devto' || inputs.platforms == '' }}
+    env:
+      DEV_TO_API_KEY: ${{ secrets.DEV_TO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish article to Dev.to
+        run: |
+          if [ -z "$DEV_TO_API_KEY" ]; then
+            echo "DEV_TO_API_KEY not set — skipping Dev.to"
+            exit 0
+          fi
+
+          FILE="${{ needs.select-article.outputs.article_file }}"
+          TITLE="${{ needs.select-article.outputs.article_title }}"
+
+          # Extract body (skip metadata header lines)
+          BODY=$(awk 'NR>1 && /^[^*]/' "$FILE" | head -200 | python3 -c "
+import sys, json
+content = sys.stdin.read()
+print(json.dumps(content))
+")
+
+          CANONICAL="https://github.com/kogunlowo123/citadel-cloud-management/blob/main/$FILE"
+
+          curl -sf -X POST "https://dev.to/api/articles" \
+            -H "api-key: $DEV_TO_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"article\": {
+                \"title\": $(echo \"$TITLE\" | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read().strip()))'),
+                \"published\": true,
+                \"body_markdown\": $BODY,
+                \"tags\": [\"aws\", \"terraform\", \"devops\", \"cloud\"],
+                \"canonical_url\": \"$CANONICAL\",
+                \"series\": \"Citadel Cloud Management\"
+              }
+            }" && echo "Dev.to: published" || echo "Dev.to: FAILED"
+
+  publish-hashnode:
+    name: Publish to Hashnode
+    runs-on: ubuntu-latest
+    needs: select-article
+    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'hashnode' || inputs.platforms == '' }}
+    env:
+      HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
+      HASHNODE_PUB_ID: ${{ secrets.HASHNODE_PUB_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish article to Hashnode
+        run: |
+          if [ -z "$HASHNODE_TOKEN" ] || [ -z "$HASHNODE_PUB_ID" ]; then
+            echo "HASHNODE_TOKEN or HASHNODE_PUB_ID not set — skipping Hashnode"
+            exit 0
+          fi
+
+          FILE="${{ needs.select-article.outputs.article_file }}"
+          TITLE="${{ needs.select-article.outputs.article_title }}"
+
+          CONTENT=$(python3 -c "
+import sys, json
+with open('$FILE') as f:
+    content = f.read()
+# Remove metadata header
+lines = content.split('\n')
+body_lines = [l for l in lines[4:]]
+body = '\n'.join(body_lines)
+print(json.dumps(body))
+")
+
+          CANONICAL="https://github.com/kogunlowo123/citadel-cloud-management/blob/main/$FILE"
+
+          curl -sf -X POST "https://gql.hashnode.com/" \
+            -H "Authorization: $HASHNODE_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\": \"mutation PublishPost(\$input: PublishPostInput!) { publishPost(input: \$input) { post { id url } } }\", \"variables\": {\"input\": {\"title\": $(echo $TITLE | python3 -c 'import sys,json; print(json.dumps(sys.stdin.read().strip()))'), \"publicationId\": \"$HASHNODE_PUB_ID\", \"contentMarkdown\": $CONTENT, \"originalArticleURL\": \"$CANONICAL\"}}}" \
+            && echo "Hashnode: published" || echo "Hashnode: FAILED"
+
+  distribution-report:
+    name: Distribution Summary Report
+    runs-on: ubuntu-latest
+    needs: [publish-devto, publish-hashnode]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          echo "## Global Distribution Run — $DATE" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dev.to | ${{ needs.publish-devto.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hashnode | ${{ needs.publish-hashnode.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Add DEV_TO_API_KEY secret to enable Dev.to publishing" >> $GITHUB_STEP_SUMMARY
+          echo "- Add HASHNODE_TOKEN + HASHNODE_PUB_ID to enable Hashnode" >> $GITHUB_STEP_SUMMARY
