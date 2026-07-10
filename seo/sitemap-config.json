@@ -1,0 +1,76 @@
+{
+  "website": "https://www.citadelcloudmanagement.com",
+  "lastmod": "2026-07-10",
+  "changefreq": "weekly",
+  "priority_rules": {
+    "/": 1.0,
+    "/services": 0.9,
+    "/blogs/news": 0.8,
+    "/blogs/news/*": 0.7,
+    "/contact": 0.6,
+    "/about": 0.5
+  },
+  "structured_data": {
+    "organization": {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Citadel Cloud Management",
+      "url": "https://www.citadelcloudmanagement.com",
+      "description": "Enterprise cloud management, Terraform modules, MCP servers, and AI infrastructure for AWS, Azure, and GCP",
+      "sameAs": [
+        "https://github.com/Citadel-Cloud-Management",
+        "https://github.com/kogunlowo123",
+        "https://www.linkedin.com/company/citadel-cloud-management"
+      ],
+      "foundingDate": "2024"
+    },
+    "website": {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Citadel Cloud Management",
+      "url": "https://www.citadelcloudmanagement.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.citadelcloudmanagement.com/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+  },
+  "meta_defaults": {
+    "title_suffix": " | Citadel Cloud Management",
+    "og_image": "https://www.citadelcloudmanagement.com/og-image.png",
+    "twitter_card": "summary_large_image",
+    "twitter_site": "@CitadelCloudMgmt"
+  },
+  "keywords": {
+    "primary": [
+      "cloud management",
+      "terraform modules",
+      "aws infrastructure",
+      "azure kubernetes service",
+      "gcp terraform",
+      "mcp servers",
+      "multi-cloud architecture",
+      "devops automation"
+    ],
+    "secondary": [
+      "terraform aws vpc",
+      "azure aks terraform",
+      "gke autopilot terraform",
+      "aws bedrock agents",
+      "mcp server terraform",
+      "multi-cloud landing zone",
+      "aws security baseline",
+      "cloud career africa"
+    ],
+    "geo_optimized": [
+      "AI cloud infrastructure management",
+      "best terraform modules github",
+      "open source mcp servers devops",
+      "enterprise cloud landing zone terraform"
+    ]
+  }
+}
