@@ -1,0 +1,44 @@
+title: Citadel Cloud Management
+description: 100+ production Terraform guides for AWS, Azure, GCP, Kubernetes, DevSecOps, AI/ML & Cloud Careers
+url: "https://kogunlowo123.github.io"
+baseurl: "/citadel-cloud-management"
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+author:
+  name: Citadel Cloud Management
+  email: citadelcloudmanagement@gmail.com
+  url: https://citadelcloudmanagement.com
+
+collections:
+  articles:
+    output: true
+    permalink: /articles/:name
+
+defaults:
+  - scope:
+      path: "citadel-content/blog"
+    values:
+      layout: post
+      author: Citadel Cloud Management
+
+nav_links:
+  - title: "AWS"
+    url: "/aws"
+  - title: "Azure"
+    url: "/azure"
+  - title: "GCP"
+    url: "/gcp"
+  - title: "MCP Servers"
+    url: "/mcp"
+  - title: "DevSecOps"
+    url: "/devsecops"
+  - title: "Careers"
+    url: "/careers"
+
+twitter:
+  username: citadelcloud
