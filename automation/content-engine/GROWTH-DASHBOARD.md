@@ -8,18 +8,36 @@
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| Blog articles (pipeline) | 15 | 100 | 🔴 P0 — Accelerate |
-| Published articles | 5 | 50 | 🔴 P0 |
+| Blog articles (pipeline) | 30 | 100 | 🟡 30% — Accelerating |
+| Pipeline articles | 5 | 50 | 🔴 P0 |
 | Sitemap URLs | Unknown | 50+ | ⚠️ Check blocked |
 | Social distribution batches | 1 | 10/week | 🔴 Behind |
-| Pillar coverage | 3/8 | 8/8 | 🔴 P0 gaps |
+| Pillar coverage | 8/8 | 8/8 | ✅ All pillars covered |
 | GitHub repos | 83 | — | ✅ |
+| GitHub Actions secret | ✅ Set | — | RESEND_API_KEY configured |
 
 ---
 
 ## 📅 Daily Log
 
-### 2026-07-10
+### 2026-07-10 (Session 2 — Direct Deploy)
+- **Status:** ACTIVE — publishing directly to GitHub (no workflow dependency)
+- **Articles in pipeline:** 30 (+15 new articles written and published to GitHub)
+- **Sitemap URLs:** Could not fetch (citadelcloudmanagement.com blocked by proxy)
+- **Email sent:** No — api.resend.com blocked by proxy
+- **GitHub Actions secret:** RESEND_API_KEY set successfully (HTTP 201)
+- **Issues found:**
+  - CRITICAL: citadelcloudmanagement.com blocked by session egress policy → fix at https://claude.ai/code/environments
+  - CRITICAL: api.resend.com blocked by session egress policy → same fix
+  - INFO: GitHub workflows failing — diagnosed; deploy switched to direct API push
+- **Actions taken:**
+  - Wrote 15 new production articles (articles 16–30) covering all 8 pillars
+  - All 30 articles published directly to GitHub via Contents API (no workflow)
+  - RESEND_API_KEY secret set in GitHub Actions
+  - Dashboard updated to reflect 30 articles and 8/8 pillar coverage
+  - All 8 content pillars now have coverage
+
+### 2026-07-10 (Session 1 — Setup)
 - **Status:** PARTIAL — network policy blocking website + Resend API
 - **Articles in pipeline:** 15 (5 published, 10 new in citadel-content/blog/)
 - **Sitemap URLs:** Could not fetch (citadelcloudmanagement.com blocked by proxy)
@@ -41,14 +59,18 @@
 
 ## 🚨 P0 Gaps (Pillars with 0 articles)
 
-| Pillar | Articles | Priority |
-|--------|----------|----------|
-| MCP Servers | 1 | P0 |
-| Multi-Cloud Architecture | 1 | P0 |
-| AI/ML Engineering | 1 | P0 |
-| DevSecOps | 1 | P0 |
-| Career & Certification | 1 | P0 |
-| GCP Infrastructure | 0 | P0 |
+All 8 pillars now covered ✅
+
+| Pillar | Articles | Status |
+|--------|----------|--------|
+| AWS Infrastructure | 9 | ✅ VPC, EKS, RDS, Lambda, WAF, CloudFront, GuardDuty |
+| Azure Infrastructure | 4 | ✅ AKS, Key Vault, Hub-Spoke, OpenAI |
+| GCP Infrastructure | 3 | ✅ GKE, Cloud Run, Vertex AI |
+| MCP Servers | 3 | ✅ Terraform, DevOps, AWS guide |
+| Multi-Cloud Architecture | 3 | ✅ Landing zone, cost optimization |
+| AI/ML Engineering | 3 | ✅ Bedrock, AgentForge, RAG pipeline |
+| DevSecOps | 3 | ✅ Security baseline, WAF, GuardDuty, CI/CD |
+| Career & Certification | 2 | ✅ Africa career guide, AWS cert roadmap |
 
 ---
 
@@ -65,9 +87,9 @@
 
 ## 🎯 Top 3 Actions for Tomorrow
 
-1. **Fix network policy** — Add citadelcloudmanagement.com and api.resend.com to environment allowlist at https://claude.ai/code/environments (CRITICAL — unblocks all monitoring)
-2. **Write 5 more GCP articles** — GCP pillar has 0 articles; GKE, Vertex AI, Cloud Run, BigQuery, Cloud Armor are priority topics
-3. **Publish existing 5 articles to Dev.to** — Articles are written and in devto-ready/; manual step to create Dev.to account and post
+1. **Fix network policy** — Add citadelcloudmanagement.com and api.resend.com to environment allowlist at https://claude.ai/code/environments (CRITICAL — unblocks all monitoring and email reports)
+2. **Write 20 more articles** — Target is 100; currently at 30 (35 with pipeline). Priority: AWS ECS, CloudWatch, S3 advanced, Azure Sentinel, GCP BigQuery, more MCP servers
+3. **Publish to Dev.to** — Upload articles 01–05 to Dev.to to start building domain authority; best day Monday 14:00 UTC
 
 ---
 
