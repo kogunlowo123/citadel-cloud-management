@@ -1,0 +1,47 @@
+name: Guide Request
+description: Request a new Terraform guide for a cloud service
+title: "[GUIDE REQUEST] "
+labels: ["guide-request", "content"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request a new Terraform guide. We prioritize based on community votes and pillar coverage.
+
+  - type: dropdown
+    id: pillar
+    attributes:
+      label: Content Pillar
+      options:
+        - AWS Infrastructure
+        - Azure Infrastructure
+        - GCP Infrastructure
+        - MCP Servers
+        - Multi-Cloud Architecture
+        - AI/ML Engineering
+        - DevSecOps
+        - Career & Certification
+    validations:
+      required: true
+
+  - type: input
+    id: service
+    attributes:
+      label: Cloud service / technology
+      placeholder: "e.g. AWS DataZone, Azure Managed Grafana, GCP Cloud Deploy"
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: What problem would this guide solve?
+      description: Describe the real-world use case you're trying to implement
+    validations:
+      required: true
+
+  - type: textarea
+    id: existing
+    attributes:
+      label: What have you tried?
+      description: What documentation or guides have you found so far?
