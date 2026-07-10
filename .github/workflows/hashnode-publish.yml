@@ -1,0 +1,43 @@
+name: Publish to Hashnode
+
+on:
+  workflow_dispatch:
+    inputs:
+      article_file:
+        description: 'Article filename in citadel-content/blog/'
+        required: true
+        type: string
+
+jobs:
+  publish-hashnode:
+    name: Publish to Hashnode
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish to Hashnode via GraphQL
+        env:
+          HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
+          HASHNODE_PUB_ID: ${{ secrets.HASHNODE_PUB_ID }}
+        run: |
+          if [ -z "$HASHNODE_TOKEN" ] || [ -z "$HASHNODE_PUB_ID" ]; then
+            echo "HASHNODE_TOKEN or HASHNODE_PUB_ID not set — skipping"
+            echo "Get token at: https://hashnode.com/settings/developer"
+            exit 0
+          fi
+
+          FILE="citadel-content/blog/${{ github.event.inputs.article_file }}"
+          TITLE=$(grep "^# " "$FILE" | head -1 | sed 's/^# //')
+          CONTENT=$(tail -n +2 "$FILE")
+
+          curl -sf -X POST "https://gql.hashnode.com" \
+            -H "Authorization: $HASHNODE_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg title "$TITLE" \
+              --arg content "$CONTENT" \
+              --arg pubId "$HASHNODE_PUB_ID" \
+              '{query: "mutation PublishPost($input: PublishPostInput!) { publishPost(input: $input) { post { id title url } } }", variables: {input: {title: $title, contentMarkdown: $content, publicationId: $pubId, tags: []}}}'
+            )" | python3 -c "import json,sys; r=json.load(sys.stdin); print('Published:', r.get('data',{}).get('publishPost',{}).get('post',{}).get('url','Error: '+str(r.get('errors',''))))"
