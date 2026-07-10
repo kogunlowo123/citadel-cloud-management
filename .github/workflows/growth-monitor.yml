@@ -2,7 +2,7 @@ name: Growth Monitor
 
 on:
   schedule:
-    # 3:47pm CDT = 20:47 UTC (adjusts for CDT = UTC-5, CST = UTC-6)
+    # 3:47pm CDT = 20:47 UTC
     - cron: '47 20 * * *'
   workflow_dispatch:
     inputs:
@@ -20,6 +20,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Gather content metrics
         id: metrics
@@ -38,46 +40,49 @@ jobs:
           echo "date=$DATE" >> $GITHUB_OUTPUT
           echo "time=$TIME" >> $GITHUB_OUTPUT
 
-          echo "Blog articles: $BLOG_COUNT"
+          echo "Blog articles: $BLOG_COUNT (target: 100)"
           echo "Pipeline articles: $PIPELINE_COUNT"
           echo "Social batches: $SOCIAL_COUNT"
-          echo "Total: $TOTAL (target: 100)"
+          echo "Total: $TOTAL"
+
+          echo "## Growth Monitor — $DATE $TIME CDT" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count | Target |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Blog articles | $BLOG_COUNT | 100 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pipeline articles | $PIPELINE_COUNT | 20 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Social batches | $SOCIAL_COUNT | 10 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Total** | **$TOTAL** | **100** |" >> $GITHUB_STEP_SUMMARY
 
       - name: Check pillar gaps
         id: pillars
         run: |
-          PILLARS=("aws" "azure" "gcp" "mcp" "multi-cloud" "ai\|bedrock\|agent" "security\|waf\|devsecops" "career\|certification")
-          NAMES=("AWS Infrastructure" "Azure Infrastructure" "GCP Infrastructure" "MCP Servers" "Multi-Cloud" "AI/ML Engineering" "DevSecOps" "Career & Certs")
           gaps=""
-          for i in "${!PILLARS[@]}"; do
-            count=$(find citadel-content/blog articles -name "*.md" 2>/dev/null | xargs grep -il "${PILLARS[$i]}" 2>/dev/null | wc -l | tr -d ' ')
+          for pillar in "aws\|eks\|vpc\|rds\|lambda" "azure\|aks\|key.vault" "gke\|gcp\|vertex" "mcp" "multi-cloud\|landing.zone" "bedrock\|ai\|agent\|rag" "security\|waf\|guardduty" "career\|certification"; do
+            count=$(find citadel-content/blog articles -name "*.md" 2>/dev/null | xargs grep -ril "$pillar" 2>/dev/null | wc -l | tr -d ' ')
             if [ "$count" -eq 0 ]; then
-              gaps="${gaps}${NAMES[$i]} (0 articles)\n"
+              gaps="${gaps}${pillar} "
             fi
           done
-          echo "pillar_gaps<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$gaps" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          if [ -n "$gaps" ]; then
+            echo "pillar_gaps=$gaps" >> $GITHUB_OUTPUT
+            echo "Pillar gaps detected: $gaps"
+          else
+            echo "pillar_gaps=" >> $GITHUB_OUTPUT
+            echo "All pillars covered"
+          fi
 
       - name: Update GROWTH-DASHBOARD.md
         run: |
           DATE=${{ steps.metrics.outputs.date }}
-          BLOG_COUNT=${{ steps.metrics.outputs.blog_count }}
-          SOCIAL_COUNT=${{ steps.metrics.outputs.social_count }}
 
-          # Update last-updated timestamp
-          sed -i "s/> Auto-updated by the daily monitor.*/> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: $DATE/" \
-            automation/content-engine/GROWTH-DASHBOARD.md
-
-          # Update blog count in metrics table
-          sed -i "s/| Blog articles (pipeline) |.*| 100 |.*|/| Blog articles (pipeline) | $BLOG_COUNT | 100 | $([ $BLOG_COUNT -lt 100 ] && echo '🔴 P0 — Accelerate' || echo '✅') |/" \
+          sed -i "s|> Auto-updated by the daily monitor.*|> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: $DATE|" \
             automation/content-engine/GROWTH-DASHBOARD.md || true
 
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git add automation/content-engine/GROWTH-DASHBOARD.md
           git diff --cached --quiet || git commit -m "chore: daily monitor update [$DATE]"
-          git push
+          git push origin HEAD
 
       - name: Send daily email report
         if: ${{ inputs.send_email != 'false' }}
@@ -89,60 +94,54 @@ jobs:
           PIPELINE_COUNT=${{ steps.metrics.outputs.pipeline_count }}
           SOCIAL_COUNT=${{ steps.metrics.outputs.social_count }}
           TOTAL=${{ steps.metrics.outputs.total_articles }}
-          STATUS=$([ $TOTAL -lt 100 ] && echo "🔴 BEHIND TARGET" || echo "✅ ON TRACK")
 
-          HTML="<h2>Citadel Cloud Management — Growth Report</h2>
-          <p><strong>Date:</strong> $DATE (CDT)</p>
-          <h3>Metrics</h3>
-          <table border='1' cellpadding='8'>
-          <tr><th>Metric</th><th>Value</th><th>Target</th><th>Status</th></tr>
-          <tr><td>Blog Articles</td><td>$BLOG_COUNT</td><td>100</td><td>$([ $BLOG_COUNT -lt 100 ] && echo '🔴' || echo '✅')</td></tr>
-          <tr><td>Pipeline Articles</td><td>$PIPELINE_COUNT</td><td>20</td><td>$([ $PIPELINE_COUNT -lt 20 ] && echo '🟡' || echo '✅')</td></tr>
-          <tr><td>Social Batches</td><td>$SOCIAL_COUNT</td><td>10</td><td>$([ $SOCIAL_COUNT -lt 10 ] && echo '🔴' || echo '✅')</td></tr>
-          <tr><td>Total Articles</td><td>$TOTAL</td><td>100</td><td>$STATUS</td></tr>
-          </table>
-          <h3>Top 3 Actions for Tomorrow</h3>
-          <ol>
-          <li>Write 5 articles on highest-priority pillar gaps</li>
-          <li>Post scheduled social media content from distribution-batch</li>
-          <li>Publish 1 article to Dev.to (best day: Monday 14:00 UTC)</li>
-          </ol>
-          <p><a href='https://github.com/kogunlowo123/citadel-cloud-management'>View Repository</a></p>"
-
-          if [ -n "$RESEND_API_KEY" ]; then
-            curl -s -X POST 'https://api.resend.com/emails' \
-              -H "Authorization: Bearer $RESEND_API_KEY" \
-              -H 'Content-Type: application/json' \
-              -d "{
-                \"from\": \"Citadel Growth Monitor <onboarding@resend.dev>\",
-                \"to\": [\"citadelcloudmanagement@gmail.com\"],
-                \"subject\": \"[Citadel Growth] Daily Report — $DATE\",
-                \"html\": \"$HTML\"
-              }"
-            echo "Email sent successfully"
-          else
-            echo "RESEND_API_KEY not set — skipping email. Add it at: Settings > Secrets > Actions"
+          if [ -z "$RESEND_API_KEY" ]; then
+            echo "RESEND_API_KEY not set — skipping email"
+            exit 0
           fi
+
+          STATUS_ICON="BEHIND TARGET"
+          [ "$TOTAL" -ge 100 ] && STATUS_ICON="ON TRACK"
+
+          curl -sf -X POST 'https://api.resend.com/emails' \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"from\": \"Citadel Growth Monitor <onboarding@resend.dev>\",
+              \"to\": [\"citadelcloudmanagement@gmail.com\"],
+              \"subject\": \"[Citadel Growth] Daily Report - $DATE\",
+              \"html\": \"<h2>Citadel Cloud Management Growth Report</h2><p><strong>Date:</strong> $DATE CDT</p><h3>Metrics</h3><table border=1 cellpadding=8><tr><th>Metric</th><th>Value</th><th>Target</th></tr><tr><td>Blog Articles</td><td>$BLOG_COUNT</td><td>100</td></tr><tr><td>Pipeline Articles</td><td>$PIPELINE_COUNT</td><td>20</td></tr><tr><td>Social Batches</td><td>$SOCIAL_COUNT</td><td>10</td></tr><tr><td><strong>Total</strong></td><td><strong>$TOTAL</strong></td><td><strong>100</strong></td></tr></table><p>Status: $STATUS_ICON</p><p><a href='https://github.com/kogunlowo123/citadel-cloud-management'>View Repository</a></p>\"
+            }" && echo "Email sent" || echo "Email failed — check RESEND_API_KEY and api.resend.com allowlist"
 
   alert-p0-gaps:
     name: Alert on P0 Content Gaps
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     needs: daily-monitor
     if: always()
     steps:
       - uses: actions/checkout@v4
-      - name: Check for P0 gaps and create GitHub issue
+
+      - name: Create issue if article count critically low
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TOTAL=$(find citadel-content/blog articles -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+          echo "Total articles: $TOTAL"
+
           if [ "$TOTAL" -lt 50 ]; then
-            # Check if a P0 issue already exists
-            existing=$(gh issue list --label "P0,content-gap" --state open --json number --jq '.[0].number' 2>/dev/null || echo "")
+            # Check for existing open P0 issue by title pattern (no label dependency)
+            existing=$(gh issue list --state open --search "P0: Article count" --json number --jq '.[0].number' 2>/dev/null || echo "")
             if [ -z "$existing" ]; then
               gh issue create \
                 --title "P0: Article count ($TOTAL) below 50 — accelerate content production" \
-                --body "The content pipeline has $TOTAL articles against a target of 100. This is a P0 gap that needs immediate attention. Assign to content team to produce 5 articles this week." \
-                --label "P0,content-gap" || true
+                --body "The content pipeline has **$TOTAL articles** against a target of 100. This is a P0 gap. Action: produce 5 articles this week covering pillar gaps." \
+                && echo "P0 issue created" || echo "Could not create issue (non-fatal)"
+            else
+              echo "P0 issue #$existing already open — skipping"
             fi
+          else
+            echo "Article count ($TOTAL) above 50 threshold — no issue needed"
           fi
