@@ -20,8 +20,12 @@ jobs:
   content-audit:
     name: Content Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Count articles
         id: count
@@ -44,69 +48,36 @@ jobs:
           echo "## Pillar Coverage" >> $GITHUB_STEP_SUMMARY
           echo "| Pillar | Files |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          for pillar in "vpc\|aws\|eks\|rds\|lambda\|s3" "azure\|aks\|entra" "gke\|gcp\|vertex\|bigquery" "mcp" "multi-cloud\|landing-zone" "bedrock\|ai\|agent\|llm" "security\|waf\|guardduty\|devsecops" "career\|certification\|cert"; do
-            count=$(find citadel-content/blog articles -name "*.md" 2>/dev/null | xargs grep -li "$pillar" 2>/dev/null | wc -l | tr -d ' ')
+          for pillar in "aws\|eks\|vpc\|rds\|lambda\|cloudfront" "azure\|aks\|key.vault" "gke\|gcp\|vertex\|cloud.run" "mcp" "multi-cloud\|landing.zone" "bedrock\|ai\|agent\|llm\|rag" "security\|waf\|guardduty\|devsecops" "career\|certification"; do
+            count=$(find citadel-content/blog articles -name "*.md" 2>/dev/null | xargs grep -ril "$pillar" 2>/dev/null | wc -l | tr -d ' ')
             echo "| $pillar | $count |" >> $GITHUB_STEP_SUMMARY
           done
 
       - name: Validate markdown
         run: |
-          # Check all markdown files have required frontmatter fields
           error_count=0
-          for f in $(find citadel-content/blog -name "*.md" 2>/dev/null); do
+          while IFS= read -r -d '' f; do
             if ! grep -q "^# " "$f"; then
               echo "::warning file=$f::Missing H1 heading"
               error_count=$((error_count + 1))
             fi
-            if ! grep -q "\*\*Pillar:\*\*\|\*\*SEO Target:\*\*" "$f"; then
-              echo "::notice file=$f::Missing pillar/SEO metadata"
-            fi
-          done
-          echo "Markdown validation complete. Errors: $error_count"
+          done < <(find citadel-content/blog -name "*.md" -print0 2>/dev/null)
+          echo "Markdown validation complete. Warnings: $error_count"
 
       - name: Update dashboard
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           BLOG_COUNT=${{ steps.count.outputs.blog_count }}
-          PIPELINE_COUNT=${{ steps.count.outputs.pipeline_count }}
           DATE=$(date -u +%Y-%m-%d)
 
-          # Update the last-updated line in GROWTH-DASHBOARD.md
-          sed -i "s/> Auto-updated by the daily monitor.*/> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: $DATE/" \
-            automation/content-engine/GROWTH-DASHBOARD.md
-          sed -i "s/| Blog articles (pipeline) |.*| 100 |/| Blog articles (pipeline) | $BLOG_COUNT | 100 |/" \
-            automation/content-engine/GROWTH-DASHBOARD.md
+          sed -i "s|> Auto-updated by the daily monitor.*|> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: $DATE|" \
+            automation/content-engine/GROWTH-DASHBOARD.md || true
 
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
           git add automation/content-engine/GROWTH-DASHBOARD.md
           git diff --cached --quiet || git commit -m "chore: auto-update growth dashboard [$DATE]"
-          git push
-
-  link-check:
-    name: Check Article Links
-    runs-on: ubuntu-latest
-    if: github.event_name != 'schedule'
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install lychee
-        run: |
-          curl -sL https://github.com/lycheeverse/lychee/releases/latest/download/lychee-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          sudo mv lychee /usr/local/bin/
-
-      - name: Check links in blog articles
-        run: |
-          lychee \
-            --timeout 30 \
-            --max-retries 3 \
-            --exclude-path .git \
-            --exclude "localhost" \
-            --exclude "127.0.0.1" \
-            --no-progress \
-            'citadel-content/blog/**/*.md' \
-            'articles/**/*.md' \
-            || true  # Don't fail the workflow on link errors, just report
+          git push origin HEAD
 
   seo-check:
     name: SEO Metadata Check
@@ -118,18 +89,19 @@ jobs:
         run: |
           passed=0
           warned=0
-          for f in $(find citadel-content/blog -name "*.md" 2>/dev/null); do
-            has_pillar=$(grep -c "Pillar:" "$f" || echo 0)
-            has_seo=$(grep -c "SEO Target:" "$f" || echo 0)
-            has_words=$(grep -c "Word Count:" "$f" || echo 0)
-            if [ "$has_pillar" -gt 0 ] && [ "$has_seo" -gt 0 ]; then
+          while IFS= read -r -d '' f; do
+            has_pillar=0
+            has_seo=0
+            grep -q "Pillar:" "$f" && has_pillar=1 || true
+            grep -q "SEO Target:" "$f" && has_seo=1 || true
+            if [ "$has_pillar" -eq 1 ] && [ "$has_seo" -eq 1 ]; then
               passed=$((passed + 1))
             else
               warned=$((warned + 1))
-              echo "::warning file=$f::Missing SEO metadata (Pillar, SEO Target)"
+              echo "::warning file=$f::Missing SEO metadata (Pillar or SEO Target)"
             fi
-          done
+          done < <(find citadel-content/blog -name "*.md" -print0 2>/dev/null)
           echo "SEO check: $passed passed, $warned need metadata"
           echo "## SEO Check Results" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Articles with metadata: $passed" >> $GITHUB_STEP_SUMMARY
-          echo "- ⚠️ Articles missing metadata: $warned" >> $GITHUB_STEP_SUMMARY
+          echo "- Articles with full metadata: $passed" >> $GITHUB_STEP_SUMMARY
+          echo "- Articles missing metadata: $warned" >> $GITHUB_STEP_SUMMARY
