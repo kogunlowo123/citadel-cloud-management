@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kogunlowo123.github.io/citadel-cloud-management/sitemap.xml
+
+# IndexNow
+# Key file: /indexnow-key-citadel.txt
