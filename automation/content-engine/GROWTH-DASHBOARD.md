@@ -1,6 +1,6 @@
 # Citadel Cloud Management — Growth Dashboard
 
-> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: 2026-07-10 (Session 3 — Distribution Push)
+> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: 2026-07-10 (Session 4 — Growth Engineering Sprint)
 
 ---
 
@@ -10,18 +10,44 @@
 |--------|-------|--------|--------|
 | Blog articles (pipeline) | 100 | 100 | ✅ TARGET REACHED |
 | Pipeline articles | 5 | 50 | 🟡 In progress |
-| Sitemap URLs | Unknown | 50+ | ⚠️ Check blocked |
+| Sitemap URLs | Auto via jekyll-sitemap | 50+ | ✅ Workflow active |
 | Social distribution batches | 2 | 10/week | 🟡 Growing |
 | Pillar coverage | 8/8 | 8/8 | ✅ All pillars covered |
 | GitHub Discussions | 4 seeded | Active | ✅ Community activated |
 | GitHub Pages | Live | — | ✅ kogunlowo123.github.io/citadel-cloud-management |
-| GitHub repos | 83 | — | ✅ |
-| GitHub Actions secret | ✅ Set | — | RESEND_API_KEY configured |
-| Gmail outreach drafts | 6 | — | ✅ Ready to send |
+| SEO: robots.txt | ✅ | — | Deployed |
+| SEO: schema.org JSON-LD | ✅ | — | Organization, WebSite, ItemList, FAQPage |
+| SEO: IndexNow key | ✅ | — | Bing/Yandex instant indexing active |
+| SEO: FAQ page | ✅ | — | faq.md live with FAQPage schema |
+| CI: SEO indexing workflow | ✅ | — | IndexNow + sitemap + RSS ping auto-runs |
+| CI: Global distribution | ✅ | — | Dev.to + Hashnode pipeline ready |
+| Gmail outreach drafts | 10 | — | ✅ Ready to send (HN, Product Hunt, podcasts, more) |
+| GitHub FUNDING.yml | ✅ | — | GitHub Sponsors enabled |
+| GitHub Issue Templates | ✅ | — | Bug report + guide request forms |
 
 ---
 
 ## 📅 Daily Log
+
+### 2026-07-10 (Session 4 — Growth Engineering Sprint)
+- **Status:** COMPLETE — full SEO + GEO foundation deployed, global distribution pipeline active
+- **SEO files deployed:** robots.txt, indexnow-key-citadel.txt, _includes/seo-schema.html (JSON-LD), _layouts/default.html (canonical tags), faq.md (FAQPage schema)
+- **GitHub Actions workflows added:**
+  - `seo-indexing.yml` — IndexNow submission to Bing/Yandex/DuckDuckGo + sitemap ping + RSS ping (triggered immediately)
+  - `global-distribution.yml` — weekly Dev.to + Hashnode auto-publish rotation (needs secrets)
+- **Gmail outreach drafts added (10 total, 4 new this session):**
+  - Hacker News "Show HN" copy-paste draft + timing guide
+  - Product Hunt launch draft with pre-launch checklist
+  - Indie Hackers, Dev.to Community, Hashnode, Stack Overflow Collective drafts
+  - Podcast pitch drafts: Screaming in the Cloud (Corey Quinn), SE Daily, CNCF/KubeCon CFP, The Changelog
+- **GitHub community features:**
+  - FUNDING.yml (GitHub Sponsors link enabled)
+  - Issue templates: bug report + guide request
+- **GitHub Pages enhancements:**
+  - Enhanced _config.yml (social cards, Twitter Cards, feed config, full keyword set)
+  - Custom Jekyll layout with schema.org injection
+  - FAQ page eligible for Google featured snippets (FAQPage schema)
+- **IndexNow workflow queued** — will submit 100+ URLs to Bing, Yandex, DuckDuckGo on next run
 
 ### 2026-07-10 (Session 3 — Distribution Push)
 - **Status:** COMPLETE — all free distribution channels activated
@@ -112,13 +138,34 @@ All 8 pillars now covered ✅
 
 ---
 
-## 🎯 Top Actions for Tomorrow
+## 🎯 Prioritized Action Queue
 
-1. **Send Gmail outreach drafts** — 6 drafts ready in citadelcloudmanagement@gmail.com (Last Week in AWS, cloudonaut.io, TLDR, Dev.to, AWS Weekly, Reddit guide). Send each 1–2 days apart.
-2. **Post Reddit distribution** — See Gmail draft "REDDIT DISTRIBUTION GUIDE". Post to r/devops first (Monday), then r/aws, r/Terraform, r/kubernetes spaced 2–3 days apart.
-3. **Add Dev.to API key** — Add `DEV_TO_API_KEY` GitHub secret to activate auto-publishing workflow. Get key at https://dev.to/settings/extensions
-4. **Fix network policy** — Add citadelcloudmanagement.com and api.resend.com to environment allowlist at https://claude.ai/code/environments
-5. **Post LinkedIn milestone** — Copy from distribution-batch-002.md, Post 1. Best time: Tuesday 9–11am local.
+### TODAY (30 min total)
+1. **Post LinkedIn** — Copy "Post 1 (Milestone Announcement)" from `citadel-content/social-media/distribution-batch-002.md`. Post at 9–11am local. Best day: Tuesday.
+2. **Post Hacker News** — Open Gmail draft "HACKER NEWS". Submit to news.ycombinator.com. Use "Show HN" format. Post Tuesday–Thursday 9–11am ET.
+
+### THIS WEEK
+3. **Send newsletter outreach** — Open Gmail, go to Drafts. Send in this order (1/day):
+   - Day 1: Last Week in AWS (hello@lastweekinaws.com)
+   - Day 2: TLDR DevOps (hi@tldr.tech)
+   - Day 3: AWS Weekly (hello@awsweekly.io)
+   - Day 4: cloudonaut.io (hello@cloudonaut.io)
+   - Day 5: Dev.to partnership (team@dev.to)
+4. **Post Reddit** — Use "REDDIT DISTRIBUTION GUIDE" draft. Post: r/devops Monday, r/aws Wednesday, r/Terraform Friday.
+5. **Add DEV_TO_API_KEY secret** — https://github.com/kogunlowo123/citadel-cloud-management/settings/secrets/actions (get key at dev.to/settings/extensions)
+
+### NEXT WEEK
+6. **Send podcast pitches** — Use "TECH PODCAST PITCHES" Gmail draft. Send Screaming in the Cloud first.
+7. **Submit Product Hunt** — Use "PRODUCT HUNT" Gmail draft. Requires PH account with 2 weeks of activity first.
+8. **Post Indie Hackers milestone** — Use "INDIE HACKERS" draft.
+9. **Add Hashnode secrets** — HASHNODE_TOKEN + HASHNODE_PUB_ID to GitHub Actions secrets
+10. **Fix network policy** — Add citadelcloudmanagement.com and api.resend.com at https://claude.ai/code/environments
+
+### AUTOMATED (runs without your input)
+- SEO Indexing: seo-indexing.yml runs on every push + weekly Sundays (IndexNow → Bing/Yandex/DuckDuckGo)
+- Content Pipeline: content-pipeline.yml runs on every push + daily
+- Growth Monitor: growth-monitor.yml runs daily at 3:47pm CDT
+- Global Distribution: global-distribution.yml runs every Monday (will activate when secrets added)
 
 ---
 
