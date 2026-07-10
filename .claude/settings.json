@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'echo \"[SessionStart] Citadel Growth Monitor initializing...\" && cd /home/user && git config --global --add safe.directory /home/user/citadel-cloud-management 2>/dev/null || true'"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(git:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "Bash(echo:*)"
+    ]
+  },
+  "env": {
+    "RESEND_API_KEY": "re_VyxRSaxf_2jiSHxnoSN4cpcMxhz3EYEhp",
+    "TZ": "America/Chicago"
+  }
+}
