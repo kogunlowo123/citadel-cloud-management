@@ -61,7 +61,7 @@ Email reports use Resend. Key: stored in environment variable RESEND_API_KEY.
 From: Citadel Growth Monitor <onboarding@resend.dev>
 To: citadelcloudmanagement@gmail.com
 
-To add the key: set RESEND_API_KEY=re_VyxRSaxf_2jiSHxnoSN4cpcMxhz3EYEhp in your
+To add the key: set RESEND_API_KEY=<your-resend-api-key> in your
 Claude Code environment settings at https://claude.ai/code/environments
 
 ## Content Targets
