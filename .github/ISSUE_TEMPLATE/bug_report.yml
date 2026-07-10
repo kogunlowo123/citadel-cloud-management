@@ -1,0 +1,45 @@
+name: Bug Report — Terraform Code Error
+description: Report a bug or error in a Terraform guide
+title: "[BUG] "
+labels: ["bug", "terraform"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please fill in the details below.
+
+  - type: input
+    id: article
+    attributes:
+      label: Article filename
+      description: Which guide file contains the bug?
+      placeholder: "e.g. 01-production-vpc-terraform.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What's wrong?
+      description: Describe the error — what Terraform code is incorrect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error message
+      description: Paste the Terraform error or provider error message
+      render: shell
+
+  - type: input
+    id: terraform_version
+    attributes:
+      label: Terraform version
+      placeholder: "e.g. 1.9.0"
+
+  - type: input
+    id: provider_version
+    attributes:
+      label: Provider version
+      placeholder: "e.g. aws = 5.60.0"
