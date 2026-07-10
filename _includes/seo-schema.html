@@ -1,0 +1,114 @@
+<!-- Schema.org JSON-LD — Organization + WebSite -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.citadelcloudmanagement.com/#organization",
+      "name": "Citadel Cloud Management",
+      "url": "https://www.citadelcloudmanagement.com",
+      "sameAs": [
+        "https://github.com/kogunlowo123/citadel-cloud-management",
+        "https://kogunlowo123.github.io/citadel-cloud-management/"
+      ],
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://kogunlowo123.github.io/citadel-cloud-management/assets/images/citadel-logo.png"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "citadelcloudmanagement@gmail.com",
+        "contactType": "technical support"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://kogunlowo123.github.io/citadel-cloud-management/#website",
+      "url": "https://kogunlowo123.github.io/citadel-cloud-management/",
+      "name": "Citadel Cloud Management",
+      "description": "100+ free production Terraform guides for AWS, Azure, GCP, Kubernetes, DevSecOps, AI/ML, and Cloud Careers",
+      "publisher": { "@id": "https://www.citadelcloudmanagement.com/#organization" },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://github.com/kogunlowo123/citadel-cloud-management/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://kogunlowo123.github.io/citadel-cloud-management/#article-list",
+      "name": "100 Production Terraform Guides",
+      "description": "Complete library of production-ready Terraform guides for AWS, Azure, and GCP",
+      "numberOfItems": 100,
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Production AWS VPC with Terraform", "url": "https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/01-production-vpc-terraform.md" },
+        { "@type": "ListItem", "position": 2, "name": "Azure AKS Enterprise Terraform", "url": "https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/02-azure-aks-enterprise.md" },
+        { "@type": "ListItem", "position": 3, "name": "Multi-Cloud Landing Zone Terraform", "url": "https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/03-multi-cloud-landing-zone-terraform.md" },
+        { "@type": "ListItem", "position": 4, "name": "AWS WAF Production Protection", "url": "https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/04-aws-waf-protection-production.md" },
+        { "@type": "ListItem", "position": 5, "name": "MCP Servers Complete Guide", "url": "https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/05-mcp-servers-guide.md" },
+        { "@type": "ListItem", "position": 9, "name": "AWS Bedrock AI Agents Terraform", "url": "https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/09-bedrock-ai-agents-terraform.md" },
+        { "@type": "ListItem", "position": 30, "name": "AWS Bedrock RAG Pipeline Terraform", "url": "https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/30-aws-bedrock-rag-terraform.md" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://kogunlowo123.github.io/citadel-cloud-management/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Are all Terraform guides free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. All 100+ guides are MIT licensed, open source, and completely free with no paywall or signup required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which cloud providers are covered?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AWS (35+ guides), Azure (15+ guides), and GCP (13+ guides) are all covered with production-ready Terraform code."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What Terraform version do the guides use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "All guides use Terraform >= 1.5 and the latest provider versions. HashiCorp provider registry links are included in each guide."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I contribute a guide?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! Open a pull request on GitHub at github.com/kogunlowo123/citadel-cloud-management. See CONTRIBUTING.md for guidelines."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+<!-- Open Graph -->
+<meta property="og:site_name" content="Citadel Cloud Management" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="en_US" />
+
+<!-- Twitter Card -->
+<meta name="twitter:site" content="@citadelcloud" />
+<meta name="twitter:creator" content="@citadelcloud" />
+
+<!-- Additional SEO -->
+<meta name="author" content="Citadel Cloud Management" />
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+<link rel="canonical" href="{{ page.url | absolute_url }}" />
+
+<!-- RSS -->
+<link rel="alternate" type="application/rss+xml" title="Citadel Cloud Management" href="{{ '/feed.xml' | relative_url }}" />
