@@ -1,7 +1,13 @@
 title: Citadel Cloud Management
-description: 100+ production Terraform guides for AWS, Azure, GCP, Kubernetes, DevSecOps, AI/ML & Cloud Careers
+tagline: "100+ Production Terraform Guides — AWS, Azure, GCP"
+description: >-
+  Free production-ready Terraform guides for AWS, Azure, GCP, Kubernetes, EKS, AKS, GKE,
+  DevSecOps, AI/ML Engineering, MCP Servers, and Cloud Careers. 100+ articles, MIT licensed,
+  no paywall. Built for cloud engineers, platform engineers, and DevOps teams.
+
 url: "https://kogunlowo123.github.io"
 baseurl: "/citadel-cloud-management"
+
 theme: minima
 
 plugins:
@@ -9,10 +15,29 @@ plugins:
   - jekyll-sitemap
   - jekyll-seo-tag
 
+lang: en_US
+
 author:
   name: Citadel Cloud Management
   email: citadelcloudmanagement@gmail.com
   url: https://citadelcloudmanagement.com
+
+social:
+  name: Citadel Cloud Management
+  links:
+    - https://github.com/kogunlowo123/citadel-cloud-management
+    - https://www.citadelcloudmanagement.com
+
+twitter:
+  username: citadelcloud
+  card: summary_large_image
+
+feed:
+  path: feed.xml
+
+sitemap:
+  exclude:
+    - /404.html
 
 collections:
   articles:
@@ -37,8 +62,15 @@ nav_links:
     url: "/mcp"
   - title: "DevSecOps"
     url: "/devsecops"
+  - title: "AI/ML"
+    url: "/aiml"
   - title: "Careers"
     url: "/careers"
+  - title: "GitHub"
+    url: "https://github.com/kogunlowo123/citadel-cloud-management"
 
-twitter:
-  username: citadelcloud
+minima:
+  skin: auto
+  social_links:
+    - { platform: github, user_url: "https://github.com/kogunlowo123/citadel-cloud-management" }
+    - { platform: twitter, user_url: "https://twitter.com/citadelcloud" }
