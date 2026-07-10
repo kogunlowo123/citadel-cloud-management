@@ -1,0 +1,80 @@
+name: Publish to Dev.to
+
+on:
+  workflow_dispatch:
+    inputs:
+      article_number:
+        description: 'Article number to publish (e.g., 1 for the first article)'
+        required: true
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - 'citadel-content/blog/**.md'
+
+jobs:
+  publish-to-devto:
+    name: Publish Article to Dev.to
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find new articles on push
+        if: github.event_name == 'push'
+        id: find_new
+        run: |
+          NEW_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'citadel-content/blog/*.md' 2>/dev/null || echo "")
+          echo "new_files=$NEW_FILES" >> $GITHUB_OUTPUT
+          echo "New articles: $NEW_FILES"
+
+      - name: Publish article to Dev.to
+        env:
+          DEV_TO_API_KEY: ${{ secrets.DEV_TO_API_KEY }}
+        run: |
+          if [ -z "$DEV_TO_API_KEY" ]; then
+            echo "DEV_TO_API_KEY not set — skipping publish"
+            echo "Add DEV_TO_API_KEY at: https://dev.to/settings/extensions"
+            exit 0
+          fi
+
+          publish_article() {
+            local file=$1
+            echo "Publishing: $file"
+            
+            # Extract title (first H1)
+            TITLE=$(grep "^# " "$file" | head -1 | sed 's/^# //')
+            # Extract body (everything after first line)
+            BODY=$(tail -n +2 "$file")
+            # Extract tags from SEO line
+            SEO=$(grep "SEO Target:" "$file" | head -1 | sed 's/.*SEO Target: //')
+            
+            # Create article via Dev.to API
+            curl -sf -X POST \
+              -H "api-key: $DEV_TO_API_KEY" \
+              -H "Content-Type: application/json" \
+              "https://dev.to/api/articles" \
+              -d "$(jq -n \
+                --arg title "$TITLE" \
+                --arg body_markdown "$BODY" \
+                --arg canonical_url "https://github.com/kogunlowo123/citadel-cloud-management" \
+                '{article: {title: $title, body_markdown: $body_markdown, published: true, tags: ["aws", "terraform", "devops", "cloud"], canonical_url: $canonical_url}}' \
+              )" && echo "Published: $TITLE" || echo "Failed to publish: $TITLE"
+          }
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            for file in ${{ steps.find_new.outputs.new_files }}; do
+              [ -f "$file" ] && publish_article "$file"
+            done
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ARTICLE_NUM="${{ github.event.inputs.article_number }}"
+            FILE=$(find citadel-content/blog -name "${ARTICLE_NUM}-*.md" 2>/dev/null | head -1)
+            [ -f "$FILE" ] && publish_article "$FILE" || echo "Article $ARTICLE_NUM not found"
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Dev.to Publishing Status" >> $GITHUB_STEP_SUMMARY
+          echo "Workflow completed. Check DEV_TO_API_KEY secret if articles were not published." >> $GITHUB_STEP_SUMMARY
+          echo "Get your API key at: https://dev.to/settings/extensions" >> $GITHUB_STEP_SUMMARY
