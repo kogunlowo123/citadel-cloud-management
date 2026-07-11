@@ -1,504 +1,155 @@
+Chrome path: /usr/bin/google-chrome-stable
+Launching browser...
+Navigating to dev.to...
+URL: https://dev.to/enter?state=new-user
+Title: Welcome! - DEV Community
+Body (first 800 chars):
 
-FATAL: elementHandle.click: Timeout 30000ms exceeded.
-Call log:
-  - attempting click action
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #1
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #2
-  -   waiting 20ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #3
-  -   waiting 100ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #4
-  -   waiting 100ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #5
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #6
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #7
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #8
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #9
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #10
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #11
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #12
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #13
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #14
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #15
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #16
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #17
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #18
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #19
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #20
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #21
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #22
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #23
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #24
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #25
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #26
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #27
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #28
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #29
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #30
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #31
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #32
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #33
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #34
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #35
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #36
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #37
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #38
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #39
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #40
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #41
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #42
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #43
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #44
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #45
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #46
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #47
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #48
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #49
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #50
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #51
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #52
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #53
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #54
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #55
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #56
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #57
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #58
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #59
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #60
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #61
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #62
-  -   waiting 500ms
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
 
-elementHandle.click: Timeout 30000ms exceeded.
-Call log:
-  - attempting click action
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #1
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #2
-  -   waiting 20ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #3
-  -   waiting 100ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #4
-  -   waiting 100ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #5
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #6
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #7
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #8
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #9
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #10
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #11
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #12
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #13
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #14
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #15
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #16
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #17
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #18
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #19
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #20
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #21
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #22
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #23
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #24
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #25
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #26
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #27
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #28
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #29
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #30
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #31
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #32
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #33
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #34
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #35
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #36
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #37
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #38
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #39
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #40
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #41
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #42
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #43
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #44
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #45
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #46
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #47
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #48
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #49
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #50
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #51
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #52
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #53
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #54
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #55
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #56
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #57
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #58
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #59
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #60
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #61
-  -   waiting 500ms
-  -   waiting for element to be visible, enabled and stable
-  -   element is not visible
-  - retrying click action, attempt #62
-  -   waiting 500ms
+      
 
-    at /tmp/devto-work/signup.js:60:23
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 169;
+          }
+        
+      
+      
+        
+      
+      
+
+
+  
+  Skip to content
+  
+    
+      
+        Navigation menu
+    
+
+
+      
+    
+    
+    
+
+
+
+    
+      
+        
+          
+            
+            
+              Search
+    
+
+
+            
+
+            
+                Powered by Algol
+Inputs:
+  type=text id=search-input name=q ph="Search..." visible=false
+  type=hidden id= name=authenticity_token ph="" visible=false
+  type=hidden id= name=authenticity_token ph="" visible=false
+  type=hidden id= name=authenticity_token ph="" visible=false
+  type=hidden id= name=authenticity_token ph="" visible=false
+  type=hidden id= name=authenticity_token ph="" visible=false
+  type=hidden id= name=authenticity_token ph="" visible=false
+Buttons:
+  Navigation menu visible=false
+  Search visible=false
+  Close visible=false
+  Sign up with Apple visible=true
+  Sign up with Facebook visible=true
+  Sign up with GitHub visible=true
+  Sign up with Google visible=true
+  .cls-1{fill:#242425;}.cls-2{fill:#e73427;}.cls-3{fill:#1d539 visible=true
+  Sign up with Twitter (X) visible=true
+JS-clicked toggle: "Sign up with Email"
+Inputs after toggle:
+  type=text id=search-input name=q vis=false
+  type=hidden id= name=authenticity_token vis=false
+  type=file id=user_profile_image name=user[profile_image] vis=true
+  type=text id=user_name name=user[name] vis=true
+  type=text id=user_username name=user[username] vis=true
+  type=email id=user_email name=user[email] vis=true
+  type=password id=user_password name=user[password] vis=true
+  type=password id=user_password_confirmation name=user[password_confirmation] vis=true
+  type=submit id= name=commit vis=true
+Form fill result: {"emailFilled":true,"emailId":"user_email","pwFilled":true,"nameFilled":true,"usernameFilled":true}
+Submit result: Search
+After URL: https://dev.to/search?q=
+After text (500 chars): 
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 16
+OUTCOME=UNKNOWN url=https://dev.to/search?q= text=
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 169;
+          }
+        
+      
+      
+        
+      
+      
+
+
+  
+  Skip to content
+  
+    
+      
+ 
