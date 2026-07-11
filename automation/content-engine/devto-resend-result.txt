@@ -1,0 +1,125 @@
+Navigating to dev.to login...
+After login URL: https://dev.to/users/sign_in
+Page text (800):
+
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 169;
+          }
+        
+      
+      
+        
+      
+      
+
+
+  
+  Skip to content
+  
+    
+      
+        Navigation menu
+    
+
+
+      
+    
+    
+    
+
+
+
+    
+      
+        
+          
+            
+            
+              Search
+    
+
+
+            
+
+            
+                Powered by Algol
+Resend result: NO_RESEND_BUTTON — will navigate to https://dev.to/users/confirmation/new
+Navigating to confirmation resend page...
+Confirm page URL: https://dev.to/users/confirmation/new
+Confirm page text (600):
+
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 169;
+          }
+        
+      
+      
+        
+      
+      
+
+
+  
+  Skip to content
+  
+    
+      
+ 
+Submit result: SUBMITTED_RESEND: Resend
+After resend URL: https://dev.to/users/confirmation
+After resend text (400): 
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105,
+RESEND_SUCCESS — check kogunlowo@gmail.com for new confirmation email
