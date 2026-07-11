@@ -1,0 +1,45 @@
+Navigating to dev.to login...
+URL: https://dev.to/enter
+Title: Welcome! - DEV Community
+Clicked toggle: null
+Form fill: {"emailFilled":true,"pwFilled":true}
+Submit: loginForm.click: Log in
+After URL: https://dev.to/users/sign_in
+After text (600): 
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 169;
+          }
+        
+      
+      
+        
+      
+      
+
+
+  
+  Skip to content
+  
+    
+      
+ 
+BLOCKED_UNVERIFIED_EMAIL — account needs email verification first
+Please check citadelcloudmanagement@gmail.com for a verification email from dev.to
