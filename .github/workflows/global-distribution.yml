@@ -62,7 +62,7 @@ jobs:
     name: Publish to Dev.to
     runs-on: ubuntu-latest
     needs: select-article
-    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'devto' || inputs.platforms == '' }}
+    if: ${{ !inputs.platforms || inputs.platforms == 'all' || inputs.platforms == 'devto' }}
     env:
       DEV_TO_API_KEY: ${{ secrets.DEV_TO_API_KEY }}
     steps:
@@ -105,7 +105,7 @@ print(json.dumps(content))
     name: Publish to Hashnode
     runs-on: ubuntu-latest
     needs: select-article
-    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'hashnode' || inputs.platforms == '' }}
+    if: ${{ !inputs.platforms || inputs.platforms == 'all' || inputs.platforms == 'hashnode' }}
     env:
       HASHNODE_TOKEN: ${{ secrets.HASHNODE_TOKEN }}
       HASHNODE_PUB_ID: ${{ secrets.HASHNODE_PUB_ID }}

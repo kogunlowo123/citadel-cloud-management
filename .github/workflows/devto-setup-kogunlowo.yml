@@ -1,0 +1,343 @@
+name: Dev.to — Setup via kogunlowo@gmail.com (Login or Signup)
+
+on:
+  push:
+    paths:
+      - '.github/workflows/devto-setup-kogunlowo.yml'
+  workflow_dispatch:
+
+jobs:
+  setup:
+    name: Login or Signup + Extract API Key
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Install Chrome + Playwright
+        run: |
+          which google-chrome-stable 2>/dev/null || \
+          (wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add - && \
+           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list && \
+           sudo apt-get update -qq && sudo apt-get install -y google-chrome-stable 2>&1 | tail -3)
+
+          CHROME_PATH=$(which google-chrome-stable || which google-chrome || echo "")
+          echo "CHROME_PATH=$CHROME_PATH" >> $GITHUB_ENV
+
+          mkdir -p /tmp/devto-work
+          echo '{"name":"devto-setup","version":"1.0.0","dependencies":{"playwright":"1.44.0"}}' > /tmp/devto-work/package.json
+          cd /tmp/devto-work
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install 2>&1 | tail -3
+
+      - name: Login or signup and extract API key
+        run: |
+          cat > /tmp/devto-work/setup.js << 'JSEOF'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const LOG = [];
+          const log = msg => { console.log(msg); LOG.push(msg); };
+
+          const EMAIL    = 'kogunlowo@gmail.com';
+          const PASSWORD = process.env.DEVTO_PASSWORD;
+
+          async function fillInput(page, selector, value) {
+            const el = await page.$(selector);
+            if (!el) return false;
+            await page.evaluate(({ sel, val }) => {
+              const el = document.querySelector(sel);
+              if (!el) return;
+              const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+              nativeSetter.call(el, val);
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+            }, { sel: selector, val: value });
+            return true;
+          }
+
+          (async () => {
+            const launchOpts = {
+              headless: true,
+              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            };
+            const chromePath = process.env.CHROME_EXEC || '';
+            if (chromePath) launchOpts.executablePath = chromePath;
+
+            const browser = await chromium.launch(launchOpts);
+            const page = await browser.newPage({
+              userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            });
+
+            // ── STEP 1: Try login ──────────────────────────────────────────
+            log('=== STEP 1: Try login with ' + EMAIL + ' ===');
+            await page.goto('https://dev.to/enter', { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.screenshot({ path: '/tmp/devto_k_01_enter.png' });
+
+            // Click email toggle
+            await page.evaluate(() => {
+              const els = [...document.querySelectorAll('button, a, [role="tab"]')];
+              const emailEl = els.find(e => /email/i.test(e.textContent));
+              if (emailEl) emailEl.click();
+            });
+            await page.waitForTimeout(1500);
+
+            // Fill login form
+            await page.evaluate(({ email, pw }) => {
+              const ns = (el, val) => {
+                const s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                s.call(el, val);
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+              };
+              const emailEl = document.querySelector('#user_email, input[name="user[email]"], input[type="email"]');
+              const pwEl    = document.querySelector('#user_password, input[name="user[password]"], input[type="password"]');
+              if (emailEl) ns(emailEl, email);
+              if (pwEl)    ns(pwEl, pw);
+            }, { email: EMAIL, pw: PASSWORD });
+
+            await page.screenshot({ path: '/tmp/devto_k_02_filled.png' });
+
+            // Submit
+            const loginSubmit = await page.evaluate(() => {
+              const form = document.querySelector('form#new_user, form[action*="/users/sign_in"], form[action="/users/sign_in"]');
+              if (form) {
+                const sub = form.querySelector('input[type="submit"], button[type="submit"]');
+                if (sub) { sub.click(); return 'clicked: ' + (sub.value || sub.textContent.trim()); }
+              }
+              const pw = document.querySelector('#user_password');
+              if (pw) {
+                const f = pw.closest('form');
+                if (f) {
+                  const sub = f.querySelector('input[type="submit"], button[type="submit"]');
+                  if (sub) { sub.click(); return 'pwForm: ' + (sub.value || sub.textContent.trim()); }
+                }
+              }
+              return 'no-submit';
+            });
+            log('Login submit: ' + loginSubmit);
+
+            await page.waitForTimeout(5000);
+            await page.screenshot({ path: '/tmp/devto_k_03_after_login.png' });
+            const afterLoginUrl  = page.url();
+            const afterLoginText = await page.textContent('body').catch(() => '');
+            log('After login URL: ' + afterLoginUrl);
+            log('After login text(500): ' + afterLoginText.substring(0, 500));
+
+            const lower = afterLoginText.toLowerCase();
+            let loggedIn = false;
+
+            if (afterLoginUrl.includes('/dashboard') || afterLoginUrl === 'https://dev.to/' || afterLoginUrl === 'https://dev.to') {
+              log('LOGIN_SUCCESS');
+              loggedIn = true;
+            } else if (lower.includes('confirm') && lower.includes('email')) {
+              log('BLOCKED_UNVERIFIED_EMAIL — account exists but email not verified');
+              log('Check kogunlowo@gmail.com for Dev.to confirmation email');
+            } else if (lower.includes('invalid') || lower.includes('incorrect') || lower.includes('wrong password')) {
+              log('LOGIN_FAILED_WRONG_PASSWORD — will try signup');
+            } else if (lower.includes('not found') || lower.includes("doesn't exist") || lower.includes('no account')) {
+              log('LOGIN_FAILED_NO_ACCOUNT — will try signup');
+            } else {
+              log('LOGIN_RESULT_UNKNOWN — url=' + afterLoginUrl);
+              log('Will attempt signup regardless');
+            }
+
+            // ── STEP 2: Signup if not logged in ───────────────────────────
+            if (!loggedIn) {
+              log('');
+              log('=== STEP 2: Signup with ' + EMAIL + ' ===');
+              await page.goto('https://dev.to/enter?state=new-user', { waitUntil: 'domcontentloaded', timeout: 30000 });
+              await page.screenshot({ path: '/tmp/devto_k_04_signup_landing.png' });
+
+              // Click email signup toggle
+              const clicked = await page.evaluate(() => {
+                const els = [...document.querySelectorAll('button, a, [role="tab"]')];
+                const emailEl = els.find(e => /email/i.test(e.textContent));
+                if (emailEl) { emailEl.click(); return emailEl.textContent.trim(); }
+                return null;
+              });
+              log('Signup toggle: ' + JSON.stringify(clicked));
+              await page.waitForTimeout(1500);
+
+              // Fill signup form
+              const filled = await page.evaluate(({ email, pw }) => {
+                const ns = (el, val) => {
+                  const s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  s.call(el, val);
+                  el.dispatchEvent(new Event('input', { bubbles: true }));
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                };
+                const result = {};
+                const emailEl = document.querySelector('#user_email, input[name="user[email]"], input[type="email"]');
+                if (emailEl) { ns(emailEl, email); result.email = true; }
+
+                const pwEl = document.querySelector('#user_password, input[name="user[password]"], input[type="password"]');
+                if (pwEl) { ns(pwEl, pw); result.pw = true; }
+
+                const nameEl = document.querySelector('#user_name, input[name="user[name]"]');
+                if (nameEl) { ns(nameEl, 'Citadel Cloud Management'); result.name = true; }
+
+                const userEl = document.querySelector('#user_username, input[name="user[username]"]');
+                if (userEl) { ns(userEl, 'citadel-cloud-mgmt'); result.username = true; }
+
+                const pwConfEl = document.querySelector('#user_password_confirmation, input[name="user[password_confirmation]"]');
+                if (pwConfEl) { ns(pwConfEl, pw); result.pwConf = true; }
+
+                return result;
+              }, { email: EMAIL, pw: PASSWORD });
+              log('Signup fill: ' + JSON.stringify(filled));
+
+              await page.screenshot({ path: '/tmp/devto_k_05_signup_filled.png' });
+
+              // Submit signup
+              const signupSubmit = await page.evaluate(() => {
+                const form = document.querySelector('form#new_user, form[action*="/users"], form[action="/users"]');
+                if (form) {
+                  const sub = form.querySelector('input[type="submit"][name="commit"], input[type="submit"], button[type="submit"]');
+                  if (sub) { sub.click(); return 'regForm: ' + (sub.value || sub.textContent.trim()); }
+                  form.requestSubmit(); return 'regForm.requestSubmit';
+                }
+                const pw = document.querySelector('#user_password');
+                if (pw) {
+                  const f = pw.closest('form');
+                  if (f) {
+                    const sub = f.querySelector('input[type="submit"], button[type="submit"]');
+                    if (sub) { sub.click(); return 'pwForm: ' + (sub.value || ''); }
+                  }
+                }
+                const commit = document.querySelector('input[name="commit"]');
+                if (commit) { commit.click(); return 'commit.click'; }
+                return 'no-submit';
+              });
+              log('Signup submit: ' + signupSubmit);
+
+              await page.waitForTimeout(5000);
+              await page.screenshot({ path: '/tmp/devto_k_06_after_signup.png' });
+              const afterUrl  = page.url();
+              const afterText = await page.textContent('body').catch(() => '');
+              log('After signup URL: ' + afterUrl);
+              log('After signup text(500): ' + afterText.substring(0, 500));
+
+              const lowerS = afterText.toLowerCase();
+              if (afterUrl.includes('/dashboard') || afterUrl === 'https://dev.to/' || afterUrl === 'https://dev.to') {
+                log('SIGNUP_DIRECT_LOGIN — logged in immediately');
+                loggedIn = true;
+              } else if (lowerS.includes('check your email') || lowerS.includes('verify') || lowerS.includes('confirmation') || lowerS.includes('sent')) {
+                log('SIGNUP_SUCCESS_EMAIL_SENT — check kogunlowo@gmail.com for verification email');
+              } else if (lowerS.includes('taken') || lowerS.includes('already')) {
+                log('SIGNUP_EMAIL_OR_USERNAME_TAKEN — ' + afterText.substring(0, 400));
+                // Try alternative username
+                log('Retrying with username kogunlowo1...');
+                await page.evaluate(() => {
+                  const userEl = document.querySelector('#user_username, input[name="user[username]"]');
+                  if (userEl) {
+                    const s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                    s.call(userEl, 'kogunlowo1');
+                    userEl.dispatchEvent(new Event('input', { bubbles: true }));
+                  }
+                });
+              } else {
+                log('SIGNUP_RESULT_UNKNOWN — url=' + afterUrl);
+              }
+            }
+
+            // ── STEP 3: Extract API key if logged in ────────────────────
+            if (loggedIn) {
+              log('');
+              log('=== STEP 3: Extract API key ===');
+              await page.goto('https://dev.to/settings/extensions', { waitUntil: 'domcontentloaded', timeout: 20000 });
+              await page.screenshot({ path: '/tmp/devto_k_07_settings.png' });
+
+              // Try to generate new key
+              await page.evaluate(() => {
+                const btns = [...document.querySelectorAll('button, input[type="submit"]')];
+                const genBtn = btns.find(b => /generate|new api|new key/i.test(b.textContent || b.value || ''));
+                if (genBtn) { genBtn.click(); return true; }
+              });
+              await page.waitForTimeout(2000);
+
+              let apiKey = '';
+              const keyEls = await page.$$('input[readonly], input[type="text"][value], code, pre');
+              for (const el of keyEls) {
+                const val = (await el.getAttribute('value')) || (await el.textContent().catch(() => ''));
+                if (val && val.trim().length > 20 && /^[a-zA-Z0-9_\-]+$/.test(val.trim())) {
+                  apiKey = val.trim();
+                  break;
+                }
+              }
+
+              if (apiKey) {
+                log('API_KEY_FOUND — length: ' + apiKey.length);
+                fs.writeFileSync('/tmp/devto_api_key.txt', apiKey);
+              } else {
+                log('API_KEY_NOT_FOUND — see screenshot');
+                log('Settings text: ' + (await page.textContent('body').catch(() => '')).substring(0, 600));
+              }
+            }
+
+            await browser.close();
+            fs.writeFileSync('/tmp/devto_setup_result.txt', LOG.join('\n'));
+          })().catch(err => {
+            const msg = 'FATAL: ' + err.message;
+            console.error(msg);
+            require('fs').appendFileSync('/tmp/devto_setup_result.txt', '\n' + msg);
+            process.exit(1);
+          });
+          JSEOF
+
+          cd /tmp/devto-work
+          node setup.js
+          echo "--- RESULT ---"
+          cat /tmp/devto_setup_result.txt
+        env:
+          DEVTO_PASSWORD: ${{ secrets.DEVTO_PASSWORD }}
+          CHROME_EXEC: ${{ env.CHROME_PATH }}
+
+      - name: Store API key if found
+        if: success()
+        run: |
+          [ -f /tmp/devto_api_key.txt ] || { echo "No API key — skipping"; exit 0; }
+          API_KEY=$(cat /tmp/devto_api_key.txt)
+          echo "Storing DEV_TO_API_KEY (${#API_KEY} chars)..."
+          pip install PyNaCl -q
+          python3 - << PYEOF
+          import requests, base64, os
+          from nacl import encoding, public
+          token = os.environ['GH_TOKEN']
+          repo  = "kogunlowo123/citadel-cloud-management"
+          api_key = open('/tmp/devto_api_key.txt').read().strip()
+          r = requests.get(f"https://api.github.com/repos/{repo}/actions/secrets/public-key",
+            headers={"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"})
+          pk = r.json()
+          box = public.SealedBox(public.PublicKey(base64.b64decode(pk["key"])))
+          enc = base64.b64encode(box.encrypt(api_key.encode())).decode()
+          resp = requests.put(f"https://api.github.com/repos/{repo}/actions/secrets/DEV_TO_API_KEY",
+            headers={"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"},
+            json={"encrypted_value": enc, "key_id": pk["key_id"]})
+          print("SUCCESS: DEV_TO_API_KEY set!" if resp.status_code in (201, 204) else f"FAILED: {resp.status_code} {resp.text}")
+          PYEOF
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit result
+        if: always()
+        run: |
+          RESULT=$(cat /tmp/devto_setup_result.txt 2>/dev/null || echo "No result")
+          RESULT_B64=$(echo "$RESULT" | base64 -w0)
+          SHA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-setup-result.txt" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null || true)
+          PAYLOAD="{\"message\":\"ci: devto setup result [skip ci]\",\"content\":\"${RESULT_B64}\",\"branch\":\"main\""
+          [ -n "$SHA" ] && PAYLOAD="${PAYLOAD},\"sha\":\"${SHA}\""
+          PAYLOAD="${PAYLOAD}}"
+          curl -s -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-setup-result.txt" \
+            -d "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print('Committed' if 'commit' in d else 'Error: '+str(d.get('message','')))"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devto-setup-screenshots
+          path: /tmp/devto_k_*.png
+          if-no-files-found: warn
+          retention-days: 3
