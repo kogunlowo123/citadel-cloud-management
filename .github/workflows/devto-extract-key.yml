@@ -1,0 +1,333 @@
+name: Dev.to — Direct Login + Extract API Key
+
+on:
+  push:
+    paths:
+      - '.github/workflows/devto-extract-key.yml'
+  workflow_dispatch:
+
+jobs:
+  login-and-extract:
+    name: Login to Dev.to + Get API Key
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Install Chrome + Playwright
+        run: |
+          which google-chrome-stable 2>/dev/null || \
+          (wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add - && \
+           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list && \
+           sudo apt-get update -qq && sudo apt-get install -y google-chrome-stable 2>&1 | tail -3)
+
+          CHROME_PATH=$(which google-chrome-stable || which google-chrome || echo "")
+          echo "Chrome: $CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> $GITHUB_ENV
+
+          mkdir -p /tmp/devto-work
+          cat > /tmp/devto-work/package.json << 'EOF'
+          {"name":"devto-login","version":"1.0.0","dependencies":{"playwright":"1.44.0"}}
+          EOF
+          cd /tmp/devto-work
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install 2>&1 | tail -3
+
+      - name: Login and extract API key
+        id: extract
+        run: |
+          cat > /tmp/devto-work/login.js << 'JSEOF'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const LOG = [];
+          const log = msg => { console.log(msg); LOG.push(msg); };
+
+          (async () => {
+            const chromePath = process.env.CHROME_EXEC || '';
+            const launchOpts = {
+              headless: true,
+              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            };
+            if (chromePath) launchOpts.executablePath = chromePath;
+
+            const browser = await chromium.launch(launchOpts);
+            const page = await browser.newPage({
+              userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            });
+
+            log('Navigating to dev.to login...');
+            await page.goto('https://dev.to/enter', { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.screenshot({ path: '/tmp/devto_login_01.png' });
+            log('URL: ' + page.url());
+            log('Title: ' + await page.title());
+
+            // Click email toggle
+            const clickedToggle = await page.evaluate(() => {
+              const els = [...document.querySelectorAll('button, a, [role="tab"]')];
+              const emailEl = els.find(e => e.textContent.includes('email') || e.textContent.includes('Email'));
+              if (emailEl) { emailEl.click(); return emailEl.textContent.trim(); }
+              return null;
+            });
+            log('Clicked toggle: ' + JSON.stringify(clickedToggle));
+            await page.waitForTimeout(1500);
+            await page.screenshot({ path: '/tmp/devto_login_02_toggle.png' });
+
+            // Fill login form
+            const filled = await page.evaluate(({ email, password }) => {
+              const result = {};
+              const ns = field => {
+                const s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                s.call(field, email.includes('@') && field.type === 'password' ? password : email);
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+              };
+
+              const emailEl = document.querySelector('#user_email, input[name="user[email]"], input[type="email"]');
+              if (emailEl) {
+                const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                set.call(emailEl, email);
+                emailEl.dispatchEvent(new Event('input', { bubbles: true }));
+                emailEl.dispatchEvent(new Event('change', { bubbles: true }));
+                result.emailFilled = true;
+              }
+
+              const pwEl = document.querySelector('#user_password, input[name="user[password]"], input[type="password"]');
+              if (pwEl) {
+                const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                set.call(pwEl, password);
+                pwEl.dispatchEvent(new Event('input', { bubbles: true }));
+                pwEl.dispatchEvent(new Event('change', { bubbles: true }));
+                result.pwFilled = true;
+              }
+
+              return result;
+            }, { email: 'citadelcloudmanagement@gmail.com', password: process.env.DEVTO_PASSWORD });
+
+            log('Form fill: ' + JSON.stringify(filled));
+            await page.screenshot({ path: '/tmp/devto_login_03_filled.png' });
+
+            if (filled.emailFilled || filled.pwFilled) {
+              // Submit login form
+              const submitted = await page.evaluate(() => {
+                // Find login form (different from signup — typically form#new_user or the sign-in form)
+                const loginForm = document.querySelector('form#new_user, form[action*="/users/sign_in"], form[action="/users/sign_in"]');
+                if (loginForm) {
+                  const sub = loginForm.querySelector('input[type="submit"], button[type="submit"]');
+                  if (sub) { sub.click(); return 'loginForm.click: ' + (sub.value || sub.textContent.trim()); }
+                  loginForm.requestSubmit(); return 'loginForm.requestSubmit()';
+                }
+                // Fallback: find submit near password
+                const pw = document.querySelector('#user_password');
+                if (pw) {
+                  const form = pw.closest('form');
+                  if (form) {
+                    const sub = form.querySelector('input[type="submit"], button[type="submit"]');
+                    if (sub) { sub.click(); return 'pwForm.click: ' + (sub.value || ''); }
+                    form.requestSubmit(); return 'pwForm.requestSubmit()';
+                  }
+                }
+                const commit = document.querySelector('input[name="commit"]');
+                if (commit) { commit.click(); return 'commit.click'; }
+                return 'no-submit-found';
+              });
+              log('Submit: ' + submitted);
+
+              await page.waitForTimeout(5000);
+              await page.screenshot({ path: '/tmp/devto_login_04_after.png' });
+              const afterUrl = page.url();
+              const afterText = await page.textContent('body').catch(() => '');
+              log('After URL: ' + afterUrl);
+              log('After text (600): ' + afterText.substring(0, 600));
+
+              const lower = afterText.toLowerCase();
+
+              // Check if login succeeded
+              if (afterUrl.includes('/dashboard') || afterUrl === 'https://dev.to/' || afterUrl === 'https://dev.to') {
+                log('LOGIN_SUCCESS — navigating to API settings...');
+              } else if (lower.includes('confirm') && lower.includes('email')) {
+                log('BLOCKED_UNVERIFIED_EMAIL — account needs email verification first');
+                log('Please check citadelcloudmanagement@gmail.com for a verification email from dev.to');
+                fs.writeFileSync('/tmp/devto_login_result.txt', LOG.join('\n'));
+                await browser.close();
+                process.exit(0);
+              } else if (lower.includes('invalid') || lower.includes('incorrect') || lower.includes('wrong')) {
+                log('LOGIN_FAILED — invalid credentials');
+                fs.writeFileSync('/tmp/devto_login_result.txt', LOG.join('\n'));
+                await browser.close();
+                process.exit(1);
+              } else {
+                log('LOGIN_UNKNOWN — url=' + afterUrl);
+              }
+            } else {
+              log('NO_FORM_FOUND');
+              fs.writeFileSync('/tmp/devto_login_result.txt', LOG.join('\n'));
+              await browser.close();
+              process.exit(1);
+            }
+
+            // Extract API key from settings
+            log('Going to /settings/extensions...');
+            await page.goto('https://dev.to/settings/extensions', { waitUntil: 'domcontentloaded', timeout: 20000 });
+            await page.screenshot({ path: '/tmp/devto_login_05_settings.png' });
+            const settingsUrl = page.url();
+            const settingsText = await page.textContent('body').catch(() => '');
+            log('Settings URL: ' + settingsUrl);
+            log('Settings text (400): ' + settingsText.substring(0, 400));
+
+            let apiKey = '';
+
+            // Look for existing key or generate one
+            if (settingsText.includes('API') || settingsText.includes('api')) {
+              // Try to generate a new key first
+              const generated = await page.evaluate(() => {
+                const btns = [...document.querySelectorAll('button, input[type="submit"]')];
+                const genBtn = btns.find(b => {
+                  const t = (b.textContent || b.value || '').toLowerCase();
+                  return t.includes('generate') || t.includes('new api') || t.includes('new key');
+                });
+                if (genBtn) { genBtn.click(); return 'clicked: ' + (genBtn.textContent || genBtn.value).trim(); }
+                return null;
+              });
+              log('Generate btn: ' + JSON.stringify(generated));
+              if (generated) await page.waitForTimeout(2000);
+
+              // Find key in inputs/code elements
+              const keyEls = await page.$$('input[readonly], input[type="text"][value], code, pre');
+              for (const el of keyEls) {
+                const val = (await el.getAttribute('value')) || (await el.textContent().catch(() => ''));
+                if (val && val.trim().length > 20 && /^[a-zA-Z0-9_\-]+$/.test(val.trim())) {
+                  apiKey = val.trim();
+                  log('Found API key (length ' + apiKey.length + ')');
+                  break;
+                }
+              }
+
+              // Also check page for any token-like strings (40+ alphanumeric chars)
+              if (!apiKey) {
+                const pageContent = await page.content();
+                const tokenMatch = pageContent.match(/[a-zA-Z0-9_\-]{40,}/g);
+                if (tokenMatch) {
+                  for (const tok of tokenMatch) {
+                    if (!tok.includes('class') && !tok.includes('data-') && tok.length < 100) {
+                      apiKey = tok;
+                      log('Found token-like string (length ' + apiKey.length + ')');
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+
+            if (apiKey) {
+              log('API_KEY_FOUND — length: ' + apiKey.length);
+              fs.writeFileSync('/tmp/devto_api_key.txt', apiKey);
+            } else {
+              log('API_KEY_NOT_FOUND — see screenshots');
+              log('Settings page (1000): ' + settingsText.substring(0, 1000));
+            }
+
+            await browser.close();
+            fs.writeFileSync('/tmp/devto_login_result.txt', LOG.join('\n'));
+          })().catch(err => {
+            const msg = 'FATAL: ' + err.message;
+            console.error(msg);
+            require('fs').appendFileSync('/tmp/devto_login_result.txt', '\n' + msg);
+            process.exit(1);
+          });
+          JSEOF
+
+          cd /tmp/devto-work
+          node login.js
+          echo "--- RESULT ---"
+          cat /tmp/devto_login_result.txt
+        env:
+          DEVTO_PASSWORD: ${{ secrets.DEVTO_PASSWORD }}
+          CHROME_EXEC: ${{ env.CHROME_PATH }}
+
+      - name: Store API key as GitHub secret
+        if: success()
+        run: |
+          if [ ! -f /tmp/devto_api_key.txt ]; then
+            echo "No API key file — skipping"
+            exit 0
+          fi
+
+          API_KEY=$(cat /tmp/devto_api_key.txt)
+          KEY_LEN=${#API_KEY}
+          echo "Storing DEV_TO_API_KEY (${KEY_LEN} chars)..."
+
+          pip install PyNaCl -q
+
+          python3 - << PYEOF
+          import requests, base64, os, sys
+          from nacl import encoding, public
+
+          token = os.environ['GH_TOKEN']
+          repo  = "kogunlowo123/citadel-cloud-management"
+          api_key = open('/tmp/devto_api_key.txt').read().strip()
+
+          r = requests.get(
+            f"https://api.github.com/repos/{repo}/actions/secrets/public-key",
+            headers={"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+          )
+          pk_data = r.json()
+          pub_key_bytes = base64.b64decode(pk_data["key"])
+          box = public.SealedBox(public.PublicKey(pub_key_bytes))
+          encrypted = base64.b64encode(box.encrypt(api_key.encode())).decode()
+
+          resp = requests.put(
+            f"https://api.github.com/repos/{repo}/actions/secrets/DEV_TO_API_KEY",
+            headers={"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"},
+            json={"encrypted_value": encrypted, "key_id": pk_data["key_id"]}
+          )
+          if resp.status_code in (201, 204):
+            print("SUCCESS: DEV_TO_API_KEY secret set!")
+          else:
+            print(f"FAILED: {resp.status_code} {resp.text}")
+            sys.exit(1)
+          PYEOF
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit result to repo
+        if: always()
+        run: |
+          RESULT=$(cat /tmp/devto_login_result.txt 2>/dev/null || echo "No result file")
+          RESULT_B64=$(echo "$RESULT" | base64 -w0)
+
+          SHA=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-login-result.txt" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null || true)
+
+          PAYLOAD="{\"message\":\"ci: devto login result [skip ci]\",\"content\":\"${RESULT_B64}\",\"branch\":\"main\""
+          [ -n "$SHA" ] && PAYLOAD="${PAYLOAD},\"sha\":\"${SHA}\""
+          PAYLOAD="${PAYLOAD}}"
+
+          curl -s \
+            -X PUT \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-login-result.txt" \
+            -d "$PAYLOAD" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print('Committed' if 'commit' in d else 'Error: '+str(d.get('message','')))"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devto-login-screenshots
+          path: /tmp/devto_login_*.png
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f /tmp/devto_api_key.txt ]; then
+            echo "## ✅ DEV_TO_API_KEY Set" >> $GITHUB_STEP_SUMMARY
+            echo "API key extracted and stored as GitHub secret." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ Could Not Extract API Key" >> $GITHUB_STEP_SUMMARY
+            echo "See devto-login-result.txt in repo and screenshots artifact." >> $GITHUB_STEP_SUMMARY
+            echo "If BLOCKED_UNVERIFIED_EMAIL: check citadelcloudmanagement@gmail.com for Dev.to confirmation email." >> $GITHUB_STEP_SUMMARY
+          fi
