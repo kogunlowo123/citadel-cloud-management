@@ -32,11 +32,15 @@ jobs:
           const log = msg => { console.log(msg); LOG.push(msg); };
 
           (async () => {
-            log('Launching Chromium...');
-            const browser = await chromium.launch({
+            const chromePath = process.env.CHROME_EXEC || '';
+            log('Chrome path: ' + chromePath);
+            log('Launching browser...');
+            const launchOpts = {
               headless: true,
               args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-            });
+            };
+            if (chromePath) launchOpts.executablePath = chromePath;
+            const browser = await chromium.launch(launchOpts);
             const page = await browser.newPage({
               userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
             });
@@ -115,15 +119,23 @@ jobs:
           });
           JSEOF
 
-      - name: Install Playwright dependencies
+      - name: Install Chrome and Playwright package
         run: |
+          # Use system Chrome from GitHub Actions runner (already installed)
+          # Install wget + Chrome if not present
+          which google-chrome-stable 2>/dev/null || \
+          (wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add - && \
+           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list && \
+           sudo apt-get update -qq && sudo apt-get install -y google-chrome-stable 2>&1 | tail -3)
+
+          CHROME_PATH=$(which google-chrome-stable || which google-chrome || which chromium-browser || echo "")
+          echo "Chrome path: $CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> $GITHUB_ENV
+
+          # Install playwright npm package WITHOUT downloading its own browser
           cd /tmp/devto-work
-          npm install 2>&1 | tail -3
-          echo "Installing Chromium..."
-          # Use the local binary path explicitly to avoid version mismatch
-          node_modules/.bin/playwright install --with-deps chromium
-          echo "Chromium installed at:"
-          find /home/runner/.cache/ms-playwright /root/.cache/ms-playwright -name 'chrome' 2>/dev/null | head -1
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install 2>&1 | tail -3
+          echo "Playwright npm installed"
 
       - name: Run signup script
         id: signup
@@ -136,6 +148,7 @@ jobs:
           exit $RC
         env:
           DEVTO_PASSWORD: ${{ secrets.DEVTO_PASSWORD }}
+          CHROME_EXEC: ${{ env.CHROME_PATH }}
 
       - name: Commit result to repo
         if: always()
