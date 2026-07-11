@@ -93,9 +93,9 @@ Inputs after toggle:
   type=password id=user_password name=user[password] vis=true
   type=password id=user_password_confirmation name=user[password_confirmation] vis=true
   type=submit id= name=commit vis=true
-Form fill result: {"emailFilled":true,"emailId":"user_email","pwFilled":true,"nameFilled":true,"usernameFilled":true}
-Submit result: Search
-After URL: https://dev.to/search?q=
+Form fill result: {"emailFilled":true,"emailId":"user_email","pwFilled":true,"nameFilled":true,"usernameFilled":true,"pwConfFilled":true}
+Submit result: regForm.submit: Sign up
+After URL: https://dev.to/users/sign_up?state=email_signup
 After text (500 chars): 
       
       
@@ -117,39 +117,4 @@ After text (500 chars):
             --accent-brand-lighter-rgb: 86, 105, 285;
             --accent-brand-rgb: 64, 78, 211;
             --accent-brand-darker-rgb: 51, 62, 16
-OUTCOME=UNKNOWN url=https://dev.to/search?q= text=
-      
-      
-        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
-          document.body.classList.add("hidden-shell");
-        }
-          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
-            document.body.dataset.sideNavVisible = "false";
-          } 
-      
-
-      
-
-
-
-      
-        
-          :root {
-            --accent-brand-lighter-rgb: 86, 105, 285;
-            --accent-brand-rgb: 64, 78, 211;
-            --accent-brand-darker-rgb: 51, 62, 169;
-          }
-        
-      
-      
-        
-      
-      
-
-
-  
-  Skip to content
-  
-    
-      
- 
+OUTCOME=SUCCESS_EMAIL_SENT
