@@ -1,6 +1,6 @@
 # Citadel Cloud Management — Growth Dashboard
 
-> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: 2026-07-11 (Session 5 — Content Expansion + Distribution Assets)
+> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: 2026-07-11 (Session 6 — Dev.to Integration + Distribution Expansion)
 
 ---
 
@@ -8,8 +8,8 @@
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| Blog articles (pipeline) | 105 | 100 | ✅ 5 BEYOND TARGET |
-| devto-ready articles | 5 | 20 | 🟡 In progress |
+| Blog articles (pipeline) | 107 | 100 | ✅ 7 BEYOND TARGET |
+| devto-ready articles | 9 | 20 | 🟡 In progress |
 | Sitemap URLs | Auto via jekyll-sitemap | 50+ | ✅ Workflow active |
 | Social distribution batches | 2 | 10/week | 🟡 Growing |
 | Pillar coverage | 8/8 | 8/8 | ✅ All pillars covered |
@@ -24,13 +24,29 @@
 | Gmail outreach drafts | 10 | — | ✅ Ready to send (HN, Product Hunt, podcasts, more) |
 | GitHub FUNDING.yml | ✅ | — | GitHub Sponsors enabled |
 | GitHub Issue Templates | ✅ | — | Bug report + guide request forms |
-| devto-ready directory | 5 articles | 20 | 🟡 01, 08, 30, 35, 40 ready |
+| devto-ready directory | 9 articles | 20 | 🟡 01, 08, 09, 11, 14, 30, 31, 35, 40 ready |
 | SEO: keyword cluster doc | ✅ | — | 5 clusters, gap analysis, GEO strategy |
 | Newsletter HTML template | ✅ | — | Responsive, dark-mode aware, swap vars |
 
 ---
 
 ## 📅 Daily Log
+
+### 2026-07-11 (Session 6 — Dev.to Integration + Distribution Expansion)
+- **Status:** COMPLETE — 2 new articles, 4 new devto-ready articles, Dev.to resend confirmation workflow
+- **Articles added (106–107):**
+  - 106: AWS Transit Gateway with Terraform (hub-and-spoke, RAM sharing, route tables, CloudWatch)
+  - 107: AWS Network Firewall with Terraform (Suricata IPS rules, domain lists, centralized inspection VPC)
+- **devto-ready/ articles added (4 new — total now 9):**
+  - 09-bedrock-ai-agents-terraform-devto.md (Bedrock agent, knowledge base RAG, OpenSearch, Lambda action groups)
+  - 11-gke-autopilot-terraform-devto.md (GKE Autopilot, Workload Identity, Binary Authorization, KMS attestor)
+  - 14-azure-openai-platform-terraform-devto.md (Azure OpenAI, private endpoint, Key Vault, RBAC, Monitor)
+  - 31-aws-ecs-fargate-terraform-devto.md (ECS Fargate, ALB, ECR, auto-scaling, X-Ray, Container Insights)
+- **GitHub Actions workflows added:**
+  - `devto-resend-confirm.yml` — navigated to dev.to/users/confirmation/new, submitted resend for kogunlowo@gmail.com → RESEND_SUCCESS (confirmation email sent by Dev.to)
+  - Fixed `global-distribution.yml` job conditions (null != '' in scheduled runs — added `!inputs.platforms ||` guard)
+- **Dev.to verification status:** Confirmation email sent; awaiting click in kogunlowo@gmail.com inbox
+- **All files pushed to GitHub** — repo now at 107 articles
 
 ### 2026-07-11 (Session 5 — Content Expansion + Distribution Assets)
 - **Status:** COMPLETE — 5 new articles, 5 devto-ready articles, SEO keyword strategy, newsletter template
