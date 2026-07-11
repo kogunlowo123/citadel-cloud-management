@@ -1,0 +1,215 @@
+name: Dev.to — Resend Confirmation Email
+
+on:
+  push:
+    paths:
+      - '.github/workflows/devto-resend-confirm.yml'
+  workflow_dispatch:
+
+jobs:
+  resend:
+    name: Click Resend Confirmation for kogunlowo@gmail.com
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Install Chrome + Playwright
+        run: |
+          which google-chrome-stable 2>/dev/null || \
+          (wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add - && \
+           echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list && \
+           sudo apt-get update -qq && sudo apt-get install -y google-chrome-stable 2>&1 | tail -3)
+          CHROME_PATH=$(which google-chrome-stable || echo "")
+          echo "CHROME_PATH=$CHROME_PATH" >> $GITHUB_ENV
+          mkdir -p /tmp/devto-work
+          echo '{"name":"devto","version":"1.0.0","dependencies":{"playwright":"1.44.0"}}' > /tmp/devto-work/package.json
+          cd /tmp/devto-work && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install 2>&1 | tail -2
+
+      - name: Resend confirmation email
+        run: |
+          cat > /tmp/devto-work/resend.js << 'JSEOF'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          const LOG = [];
+          const log = msg => { console.log(msg); LOG.push(msg); };
+
+          (async () => {
+            const launchOpts = {
+              headless: true,
+              args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            };
+            const chromePath = process.env.CHROME_EXEC || '';
+            if (chromePath) launchOpts.executablePath = chromePath;
+
+            const browser = await chromium.launch(launchOpts);
+            const page = await browser.newPage({
+              userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            });
+
+            log('Navigating to dev.to login...');
+            await page.goto('https://dev.to/enter', { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+            // Click email toggle
+            await page.evaluate(() => {
+              const els = [...document.querySelectorAll('button, a, [role="tab"]')];
+              const el = els.find(e => /email/i.test(e.textContent));
+              if (el) el.click();
+            });
+            await page.waitForTimeout(1500);
+
+            // Fill email + password
+            await page.evaluate(({ email, pw }) => {
+              const ns = (el, val) => {
+                const s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                s.call(el, val);
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+              };
+              const e = document.querySelector('#user_email, input[name="user[email]"], input[type="email"]');
+              const p = document.querySelector('#user_password, input[name="user[password]"], input[type="password"]');
+              if (e) ns(e, email);
+              if (p) ns(p, pw);
+            }, { email: 'kogunlowo@gmail.com', pw: process.env.DEVTO_PASSWORD });
+
+            // Submit
+            await page.evaluate(() => {
+              const form = document.querySelector('form#new_user, form[action*="/users/sign_in"]');
+              if (form) {
+                const sub = form.querySelector('input[type="submit"], button[type="submit"]');
+                if (sub) { sub.click(); return; }
+              }
+              const pw = document.querySelector('#user_password');
+              if (pw) {
+                const f = pw.closest('form');
+                if (f) {
+                  const sub = f.querySelector('input[type="submit"], button[type="submit"]');
+                  if (sub) { sub.click(); return; }
+                }
+              }
+            });
+
+            await page.waitForTimeout(4000);
+            await page.screenshot({ path: '/tmp/devto_rc_01_after_login.png' });
+            const afterUrl  = page.url();
+            const afterText = await page.textContent('body').catch(() => '');
+            log('After login URL: ' + afterUrl);
+            log('Page text (800):\n' + afterText.substring(0, 800));
+
+            // Look for resend/confirmation elements on the page
+            const resendResult = await page.evaluate(() => {
+              // Find any button/link with "resend" or "confirmation" text
+              const allEls = [...document.querySelectorAll('a, button, input[type="submit"]')];
+              const resendEl = allEls.find(el => {
+                const t = (el.textContent || el.value || '').toLowerCase();
+                return t.includes('resend') || t.includes('re-send') ||
+                       t.includes('send confirmation') || t.includes('send again') ||
+                       t.includes('resend confirmation');
+              });
+              if (resendEl) {
+                resendEl.click();
+                return 'CLICKED: ' + (resendEl.textContent || resendEl.value || '').trim();
+              }
+
+              // If on sign-in page, try navigating directly to resend URL
+              const confirmUrl = 'https://dev.to/users/confirmation/new';
+              return 'NO_RESEND_BUTTON — will navigate to ' + confirmUrl;
+            });
+            log('Resend result: ' + resendResult);
+
+            // If no resend button found, try the confirmation resend page directly
+            if (resendResult.includes('NO_RESEND_BUTTON')) {
+              log('Navigating to confirmation resend page...');
+              await page.goto('https://dev.to/users/confirmation/new', {
+                waitUntil: 'domcontentloaded', timeout: 15000
+              });
+              await page.screenshot({ path: '/tmp/devto_rc_02_confirm_page.png' });
+              const confirmText = await page.textContent('body').catch(() => '');
+              log('Confirm page URL: ' + page.url());
+              log('Confirm page text (600):\n' + confirmText.substring(0, 600));
+
+              // Fill email and submit
+              const submitResult = await page.evaluate(({ email }) => {
+                const emailEl = document.querySelector('input[type="email"], input[name="user[email]"], #user_email');
+                if (emailEl) {
+                  const ns = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  ns.call(emailEl, email);
+                  emailEl.dispatchEvent(new Event('input', { bubbles: true }));
+                  emailEl.dispatchEvent(new Event('change', { bubbles: true }));
+
+                  const form = emailEl.closest('form');
+                  if (form) {
+                    const sub = form.querySelector('input[type="submit"], button[type="submit"]');
+                    if (sub) { sub.click(); return 'SUBMITTED_RESEND: ' + (sub.value || sub.textContent.trim()); }
+                    form.requestSubmit();
+                    return 'requestSubmit()';
+                  }
+                  return 'filled email but no form found';
+                }
+                return 'no email field on page';
+              }, { email: 'kogunlowo@gmail.com' });
+
+              log('Submit result: ' + submitResult);
+              await page.waitForTimeout(3000);
+              await page.screenshot({ path: '/tmp/devto_rc_03_after_resend.png' });
+              const finalText = await page.textContent('body').catch(() => '');
+              log('After resend URL: ' + page.url());
+              log('After resend text (400): ' + finalText.substring(0, 400));
+
+              const lower = finalText.toLowerCase();
+              if (lower.includes('sent') || lower.includes('check') || lower.includes('email') || lower.includes('confirm')) {
+                log('RESEND_SUCCESS — check kogunlowo@gmail.com for new confirmation email');
+              } else {
+                log('RESEND_RESULT_UNKNOWN');
+              }
+            } else {
+              await page.waitForTimeout(3000);
+              await page.screenshot({ path: '/tmp/devto_rc_02_after_resend.png' });
+              const afterResend = await page.textContent('body').catch(() => '');
+              log('After resend URL: ' + page.url());
+              log('After resend text (400): ' + afterResend.substring(0, 400));
+              log('RESEND_CLICKED — check kogunlowo@gmail.com for confirmation email');
+            }
+
+            await browser.close();
+            fs.writeFileSync('/tmp/devto_resend_result.txt', LOG.join('\n'));
+          })().catch(err => {
+            const msg = 'FATAL: ' + err.message;
+            console.error(msg);
+            require('fs').appendFileSync('/tmp/devto_resend_result.txt', '\n' + msg);
+            process.exit(1);
+          });
+          JSEOF
+
+          cd /tmp/devto-work
+          node resend.js
+          echo "--- RESULT ---"
+          cat /tmp/devto_resend_result.txt
+        env:
+          DEVTO_PASSWORD: ${{ secrets.DEVTO_PASSWORD }}
+          CHROME_EXEC: ${{ env.CHROME_PATH }}
+
+      - name: Commit result
+        if: always()
+        run: |
+          RESULT=$(cat /tmp/devto_resend_result.txt 2>/dev/null || echo "No result")
+          RESULT_B64=$(echo "$RESULT" | base64 -w0)
+          SHA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-resend-result.txt" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null || true)
+          PAYLOAD="{\"message\":\"ci: devto resend result [skip ci]\",\"content\":\"${RESULT_B64}\",\"branch\":\"main\""
+          [ -n "$SHA" ] && PAYLOAD="${PAYLOAD},\"sha\":\"${SHA}\""
+          PAYLOAD="${PAYLOAD}}"
+          curl -s -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-resend-result.txt" \
+            -d "$PAYLOAD" | python3 -c "import sys,json; d=json.load(sys.stdin); print('Committed' if 'commit' in d else 'Error: '+str(d.get('message','')))"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devto-resend-screenshots
+          path: /tmp/devto_rc_*.png
+          if-no-files-found: warn
+          retention-days: 3
