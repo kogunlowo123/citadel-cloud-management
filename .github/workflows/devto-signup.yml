@@ -17,211 +17,148 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Playwright locally
+      - name: Write package.json and signup script
         run: |
-          mkdir -p /tmp/pw-work
-          cd /tmp/pw-work
-          npm init -y
-          npm install playwright@1.44.0
-          npx playwright install --with-deps chromium 2>&1 | tail -5
-          echo "Playwright installed. Chromium path:"
-          ls /root/.cache/ms-playwright/chromium*/chrome-linux/chrome 2>/dev/null || \
-          ls /home/runner/.cache/ms-playwright/chromium*/chrome-linux/chrome 2>/dev/null || \
-          find / -name "chrome" -path "*/ms-playwright/*" 2>/dev/null | head -1
+          mkdir -p /tmp/devto-work
 
-      - name: Sign up for Dev.to and report results
-        id: signup
-        working-directory: /tmp/pw-work
-        run: |
-          cat > devto_signup.js << 'JSEOF'
+          cat > /tmp/devto-work/package.json << 'EOF'
+          {"name":"devto-setup","version":"1.0.0","dependencies":{"playwright":"1.44.0"}}
+          EOF
+
+          cat > /tmp/devto-work/signup.js << 'JSEOF'
           const { chromium } = require('playwright');
           const fs = require('fs');
-
           const LOG = [];
-          const log = (msg) => { console.log(msg); LOG.push(msg); };
+          const log = msg => { console.log(msg); LOG.push(msg); };
 
           (async () => {
-            log('Launching browser...');
+            log('Launching Chromium...');
             const browser = await chromium.launch({
               headless: true,
               args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
             });
-
-            const context = await browser.newContext({
+            const page = await browser.newPage({
               userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
             });
-            const page = await context.newPage();
 
-            log('Navigating to dev.to signup...');
-            try {
-              await page.goto('https://dev.to/enter?state=new-user', {
-                waitUntil: 'domcontentloaded',
-                timeout: 30000
-              });
-            } catch (e) {
-              log('GOTO ERROR: ' + e.message);
-              await browser.close();
-              fs.writeFileSync('/tmp/devto_result.txt', LOG.join('\n'));
-              process.exit(1);
-            }
-
+            log('Navigating to dev.to...');
+            await page.goto('https://dev.to/enter?state=new-user', { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.screenshot({ path: '/tmp/devto_01_landing.png' });
             log('URL: ' + page.url());
             log('Title: ' + await page.title());
 
-            await page.screenshot({ path: '/tmp/devto_01_landing.png' });
-
-            const pageContent = await page.content();
             const bodyText = await page.textContent('body').catch(() => '');
-
-            // Log all form elements
-            const inputs = await page.$$eval('input', els => els.map(e => ({
-              type: e.type, name: e.name, id: e.id, placeholder: e.placeholder
-            })));
-            log('Input fields: ' + JSON.stringify(inputs));
+            const inputs = await page.$$eval('input', els =>
+              els.map(e => 'type=' + e.type + ' id=' + e.id + ' name=' + e.name + ' ph="' + e.placeholder + '"'));
+            log('Inputs:\n  ' + inputs.join('\n  '));
 
             const buttons = await page.$$eval('button', els => els.map(e => e.textContent.trim().substring(0, 60)));
             log('Buttons: ' + JSON.stringify(buttons.slice(0, 10)));
 
-            // Look for email signup section - dev.to has a toggle between email and social
-            // First check if we need to click "Sign up with email" link
-            const emailSignupLink = await page.$('a[href*="email"], button:has-text("Sign up with email"), a:has-text("Sign up with email")');
-            if (emailSignupLink) {
-              log('Found email signup link, clicking it...');
-              await emailSignupLink.click();
-              await page.waitForTimeout(1500);
-              await page.screenshot({ path: '/tmp/devto_02_email_clicked.png' });
+            // Click email signup toggle if present
+            const emailToggle = await page.$('button:has-text("Sign up with email"), a:has-text("Sign up with email")');
+            if (emailToggle) {
+              log('Clicking email signup toggle...');
+              await emailToggle.click();
+              await page.waitForTimeout(1000);
             }
 
-            // Find the signup form
-            const nameInput      = await page.$('#user_name, input[name="user[name]"], input[placeholder*="Name"], input[placeholder*="name"]');
-            const usernameInput  = await page.$('#user_username, input[name="user[username]"]');
-            const emailInput     = await page.$('#user_email, input[name="user[email]"], input[type="email"]');
-            const passwordInput  = await page.$('#user_password, input[name="user[password]"], input[type="password"]');
+            const nameInput     = await page.$('#user_name, input[name="user[name]"]');
+            const usernameInput = await page.$('#user_username, input[name="user[username]"]');
+            const emailInput    = await page.$('#user_email, input[name="user[email]"], input[type="email"]');
+            const pwInput       = await page.$('#user_password, input[name="user[password]"], input[type="password"]');
 
-            log(`Form fields found — name:${!!nameInput} username:${!!usernameInput} email:${!!emailInput} password:${!!passwordInput}`);
+            log('Fields found: name=' + !!nameInput + ' username=' + !!usernameInput + ' email=' + !!emailInput + ' pw=' + !!pwInput);
 
-            if (emailInput && passwordInput) {
-              if (nameInput) {
-                await nameInput.fill('Citadel Cloud Management');
-                log('Filled name');
-              }
-              if (usernameInput) {
-                await usernameInput.fill('citadelcloud');
-                log('Filled username: citadelcloud');
-              }
+            if (emailInput && pwInput) {
+              if (nameInput) { await nameInput.fill('Citadel Cloud Management'); log('Filled name'); }
+              if (usernameInput) { await usernameInput.fill('citadelcloud'); log('Filled username'); }
               await emailInput.fill('citadelcloudmanagement@gmail.com');
-              log('Filled email');
-              await passwordInput.fill(process.env.DEVTO_PASSWORD);
-              log('Filled password');
+              await pwInput.fill(process.env.DEVTO_PASSWORD);
+              log('Filled email + password');
+              await page.screenshot({ path: '/tmp/devto_02_filled.png' });
 
-              await page.screenshot({ path: '/tmp/devto_03_filled.png' });
-
-              // Find and click submit button
-              const submitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("Sign up"), button:has-text("Create account")');
+              const submitBtn = await page.$('button[type="submit"], button:has-text("Sign up"), button:has-text("Create account"), input[type="submit"]');
               if (submitBtn) {
-                const btnText = await submitBtn.textContent();
-                log('Clicking submit: ' + btnText.trim());
+                log('Clicking: ' + (await submitBtn.textContent()).trim());
                 await submitBtn.click();
-                await page.waitForTimeout(4000);
-              } else {
-                log('WARNING: No submit button found!');
-              }
+              } else { log('WARNING: No submit button found'); }
 
-              await page.screenshot({ path: '/tmp/devto_04_submitted.png' });
-              const afterUrl   = page.url();
-              const afterTitle = await page.title();
-              const afterText  = await page.textContent('body').catch(() => '');
+              await page.waitForTimeout(4000);
+              await page.screenshot({ path: '/tmp/devto_03_after.png' });
 
-              log('After submit URL: ' + afterUrl);
-              log('After submit title: ' + afterTitle);
+              const afterUrl  = page.url();
+              const afterText = await page.textContent('body').catch(() => '');
+              log('After URL: ' + afterUrl);
+              const lower = afterText.toLowerCase();
 
-              // Detect outcomes
-              if (afterText.toLowerCase().includes('check your email') || afterText.toLowerCase().includes('confirmation') || afterText.toLowerCase().includes('verify')) {
-                log('OUTCOME: SUCCESS — verification email sent to citadelcloudmanagement@gmail.com');
-              } else if (afterText.toLowerCase().includes('taken') || afterText.toLowerCase().includes('already')) {
-                log('OUTCOME: USERNAME_OR_EMAIL_TAKEN — try different username');
-                // Try alternative username
-                log('Page text excerpt: ' + afterText.substring(0, 500));
-              } else if (afterText.toLowerCase().includes('error') || afterText.toLowerCase().includes('invalid')) {
-                log('OUTCOME: FORM_ERROR — see text: ' + afterText.substring(0, 500));
-              } else if (afterUrl.includes('/dashboard') || afterUrl === 'https://dev.to/') {
-                log('OUTCOME: DIRECT_LOGIN — already signed in or auto-verified!');
-              } else {
-                log('OUTCOME: UNKNOWN — text: ' + afterText.substring(0, 600));
-              }
+              if (lower.includes('check your email') || lower.includes('verify') || lower.includes('confirmation'))
+                log('OUTCOME=SUCCESS_EMAIL_SENT');
+              else if (lower.includes('taken') || lower.includes('already'))
+                log('OUTCOME=ALREADY_EXISTS:' + afterText.substring(0, 300));
+              else if (afterUrl.includes('dashboard') || afterUrl === 'https://dev.to/')
+                log('OUTCOME=DIRECT_LOGIN');
+              else
+                log('OUTCOME=UNKNOWN url=' + afterUrl + ' text=' + afterText.substring(0, 500));
             } else {
-              log('OUTCOME: NO_EMAIL_FORM_FOUND');
-              log('Page text (first 800 chars): ' + bodyText.substring(0, 800));
-              log('Page HTML (first 2000 chars): ' + pageContent.substring(0, 2000));
+              log('OUTCOME=NO_FORM_FOUND');
+              log('Page body (1500 chars):\n' + bodyText.substring(0, 1500));
             }
 
             await browser.close();
             fs.writeFileSync('/tmp/devto_result.txt', LOG.join('\n'));
-            log('Done. Log saved to /tmp/devto_result.txt');
           })().catch(err => {
-            const msg = 'FATAL ERROR: ' + err.message + '\n' + err.stack;
+            const msg = 'FATAL: ' + err.message + '\n' + err.stack;
             console.error(msg);
             require('fs').appendFileSync('/tmp/devto_result.txt', '\n' + msg);
             process.exit(1);
           });
           JSEOF
 
-          node devto_signup.js
-          echo "Exit code: $?"
+      - name: Install Playwright dependencies
+        run: |
+          cd /tmp/devto-work
+          npm install 2>&1 | tail -3
+          echo "Installing Chromium..."
+          # Use the local binary path explicitly to avoid version mismatch
+          node_modules/.bin/playwright install --with-deps chromium
+          echo "Chromium installed at:"
+          find /home/runner/.cache/ms-playwright /root/.cache/ms-playwright -name 'chrome' 2>/dev/null | head -1
+
+      - name: Run signup script
+        id: signup
+        run: |
+          cd /tmp/devto-work
+          node signup.js
+          RC=$?
+          echo "--- RESULT ---"
+          cat /tmp/devto_result.txt
+          exit $RC
         env:
           DEVTO_PASSWORD: ${{ secrets.DEVTO_PASSWORD }}
 
-      - name: Post results to GitHub (readable via API)
+      - name: Commit result to repo
         if: always()
         run: |
-          if [ -f /tmp/devto_result.txt ]; then
-            RESULT=$(cat /tmp/devto_result.txt)
-          else
-            RESULT="No result file — script likely crashed on import"
-          fi
+          RESULT=$(cat /tmp/devto_result.txt 2>/dev/null || echo "No result file — script crashed before writing")
+          RESULT_B64=$(echo "$RESULT" | base64 -w0)
 
-          # Write result to step summary (readable via GitHub UI)
-          echo "## Dev.to Signup Result" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat /tmp/devto_result.txt 2>/dev/null || echo "No result file"
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-          # Also create a Gist with the result (accessible externally)
-          GIST_PAYLOAD=$(python3 -c "
-          import json, sys
-          content = open('/tmp/devto_result.txt').read() if __import__('os').path.exists('/tmp/devto_result.txt') else 'No result file'
-          print(json.dumps({
-            'description': 'Dev.to signup result - citadel-cloud-management',
-            'public': False,
-            'files': {
-              'devto-signup-result.txt': {'content': content}
-            }
-          }))
-          ")
-
-          GIST_RESPONSE=$(curl -s --noproxy "api.github.com" \
-            -X POST \
+          # Get SHA of existing file if it exists
+          SHA=$(curl -s --noproxy "api.github.com" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/gists" \
-            -d "$GIST_PAYLOAD")
+            "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-signup-result.txt" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))" 2>/dev/null || true)
 
-          GIST_ID=$(echo "$GIST_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id','ERROR'))" 2>/dev/null)
-          echo "Result Gist ID: $GIST_ID"
-          echo "GIST_ID=$GIST_ID" >> $GITHUB_ENV
+          PAYLOAD="{\"message\":\"ci: devto signup result [skip ci]\",\"content\":\"${RESULT_B64}\",\"branch\":\"main\""
+          [ -n "$SHA" ] && PAYLOAD="${PAYLOAD},\"sha\":\"${SHA}\""
+          PAYLOAD="${PAYLOAD}}"
 
-          # Also commit result to repo so it's readable via Contents API
-          RESULT_B64=$(base64 -w0 /tmp/devto_result.txt 2>/dev/null || echo "bm8gcmVzdWx0")
           curl -s --noproxy "api.github.com" \
             -X PUT \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/contents/automation/content-engine/devto-signup-result.txt" \
-            -d "{
-              \"message\": \"ci: devto signup result [skip ci]\",
-              \"content\": \"$RESULT_B64\",
-              \"branch\": \"main\"
-            }" | python3 -c "import sys,json; d=json.load(sys.stdin); print('Committed:', d.get('commit',{}).get('sha','FAILED')[:16] if 'commit' in d else d.get('message','unknown'))"
+            -d "$PAYLOAD" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print('Committed' if 'commit' in d else 'Error: '+str(d.get('message','')))"
 
       - name: Upload screenshots
         if: always()
