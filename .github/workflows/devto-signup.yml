@@ -115,6 +115,14 @@ jobs:
                 userEl.dispatchEvent(new Event('input', { bubbles: true }));
                 result.usernameFilled = true;
               }
+              // Password confirmation
+              const pwConfEl = document.querySelector('#user_password_confirmation, input[name="user[password_confirmation]"]');
+              if (pwConfEl) {
+                const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                nativeSetter.call(pwConfEl, password);
+                pwConfEl.dispatchEvent(new Event('input', { bubbles: true }));
+                result.pwConfFilled = true;
+              }
               return result;
             }, { email: 'citadelcloudmanagement@gmail.com', password: process.env.DEVTO_PASSWORD });
 
@@ -122,14 +130,28 @@ jobs:
             await page.screenshot({ path: '/tmp/devto_03_filled.png' });
 
             if (filled.emailFilled || filled.pwFilled) {
-              // Submit via JS
+              // Submit via JS — target the REGISTRATION form specifically, not the search form
               const submitted = await page.evaluate(() => {
-                const submitEl = document.querySelector('button[type="submit"], input[type="submit"], button[data-testid*="submit"]');
-                if (submitEl) { submitEl.click(); return submitEl.textContent.trim() || 'submitted'; }
-                // Try form submit
-                const form = document.querySelector('form');
-                if (form) { form.submit(); return 'form.submit()'; }
-                return null;
+                // Find the registration form (has email/password fields, not search)
+                const regForm = document.querySelector('form#new_user, form[action*="/users"], form[action="/users"]');
+                if (regForm) {
+                  const submitEl = regForm.querySelector('input[type="submit"][name="commit"], input[type="submit"], button[type="submit"]');
+                  if (submitEl) { submitEl.click(); return 'regForm.submit: ' + (submitEl.value || submitEl.textContent.trim()); }
+                  regForm.requestSubmit(); return 'regForm.requestSubmit()';
+                }
+                // Fallback: find submit button near password field
+                const pwField = document.querySelector('#user_password');
+                if (pwField) {
+                  const form = pwField.closest('form');
+                  if (form) {
+                    const sub = form.querySelector('input[type="submit"], button[type="submit"]');
+                    if (sub) { sub.click(); return 'pwForm.click: ' + (sub.value || ''); }
+                  }
+                }
+                // Last resort: input[name="commit"]
+                const commit = document.querySelector('input[name="commit"]');
+                if (commit) { commit.click(); return 'commit.click'; }
+                return 'no-submit-found';
               });
               log('Submit result: ' + submitted);
 
