@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citadel Cloud Management — Weekly Terraform Guides</title>
+<style>
+  /* Reset */
+  body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+  table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+  img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+
+  /* Base */
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* Container */
+  .email-wrapper {
+    width: 100%;
+    background-color: #f4f4f5;
+    padding: 24px 0;
+  }
+
+  .email-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1a1f2e 0%, #0f4c75 100%);
+    padding: 32px 40px;
+    text-align: center;
+  }
+
+  .header-badge {
+    display: inline-block;
+    background-color: rgba(255,255,255,0.15);
+    color: #a5c8f0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+  }
+
+  .header p {
+    color: #a5c8f0;
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Content */
+  .content {
+    padding: 32px 40px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin: 0 0 16px 0;
+  }
+
+  /* Article Card */
+  .article-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    background-color: #fafafa;
+  }
+
+  .article-card:hover {
+    border-color: #0f4c75;
+  }
+
+  .article-pillar {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+
+  .pillar-aws     { background-color: #fff3cd; color: #856404; }
+  .pillar-k8s     { background-color: #cfe2ff; color: #084298; }
+  .pillar-devsec  { background-color: #d1e7dd; color: #0a3622; }
+  .pillar-gcp     { background-color: #f8d7da; color: #842029; }
+  .pillar-azure   { background-color: #e2d9f3; color: #432874; }
+  .pillar-aiml    { background-color: #fff3cd; color: #5a3e0a; }
+  .pillar-multi   { background-color: #d3f4f0; color: #0d3b34; }
+  .pillar-career  { background-color: #fce4ec; color: #880e4f; }
+
+  .article-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+  }
+
+  .article-card p {
+    font-size: 14px;
+    color: #4b5563;
+    margin: 0 0 12px 0;
+    line-height: 1.6;
+  }
+
+  .article-link {
+    display: inline-block;
+    color: #0f4c75;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .article-link:after {
+    content: " →";
+  }
+
+  /* Checklist */
+  .checklist {
+    background-color: #f0f9ff;
+    border-left: 3px solid #0f4c75;
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px;
+    margin: 24px 0;
+  }
+
+  .checklist h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f4c75;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .checklist ul {
+    margin: 0;
+    padding: 0 0 0 18px;
+    list-style: none;
+  }
+
+  .checklist li {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.7;
+    padding: 1px 0;
+  }
+
+  .checklist li:before {
+    content: "✓ ";
+    color: #059669;
+    font-weight: 700;
+  }
+
+  /* CTA Button */
+  .cta-block {
+    text-align: center;
+    padding: 24px 0;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background-color: #0f4c75;
+    color: #ffffff !important;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 14px 32px;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+  }
+
+  .cta-sub {
+    font-size: 12px;
+    color: #9ca3af;
+    margin: 10px 0 0 0;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    background-color: #1a1f2e;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 24px 0;
+  }
+
+  /* Footer */
+  .footer {
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    padding: 24px 40px;
+    text-align: center;
+  }
+
+  .footer p {
+    font-size: 12px;
+    color: #9ca3af;
+    margin: 4px 0;
+    line-height: 1.6;
+  }
+
+  .footer a {
+    color: #6b7280;
+    text-decoration: underline;
+  }
+
+  /* Mobile */
+  @media only screen and (max-width: 600px) {
+    .header, .content, .footer { padding-left: 20px; padding-right: 20px; }
+    .stats-bar { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="email-wrapper">
+  <table class="email-container" width="600" cellpadding="0" cellspacing="0" role="presentation">
+
+    <!-- HEADER -->
+    <tr>
+      <td class="header">
+        <div class="header-badge">Weekly Drop · {{WEEK_OF}}</div>
+        <h1>Citadel Cloud Management</h1>
+        <p>{{ARTICLE_COUNT}}+ free production Terraform guides — AWS, Azure, GCP, Kubernetes, AI/ML</p>
+      </td>
+    </tr>
+
+    <!-- STATS BAR -->
+    <tr>
+      <td>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1f2e;">
+          <tr>
+            <td style="padding:20px; text-align:center;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="text-align:center; padding:0 10px;">
+                    <span class="stat-number" style="display:block;font-size:22px;font-weight:700;color:#fff;">{{ARTICLE_COUNT}}+</span>
+                    <span class="stat-label" style="display:block;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Guides Published</span>
+                  </td>
+                  <td style="text-align:center; padding:0 10px;">
+                    <span class="stat-number" style="display:block;font-size:22px;font-weight:700;color:#fff;">MIT</span>
+                    <span class="stat-label" style="display:block;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Licensed</span>
+                  </td>
+                  <td style="text-align:center; padding:0 10px;">
+                    <span class="stat-number" style="display:block;font-size:22px;font-weight:700;color:#fff;">8</span>
+                    <span class="stat-label" style="display:block;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Cloud Pillars</span>
+                  </td>
+                  <td style="text-align:center; padding:0 10px;">
+                    <span class="stat-number" style="display:block;font-size:22px;font-weight:700;color:#fff;">$0</span>
+                    <span class="stat-label" style="display:block;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">No Paywall</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- CONTENT -->
+    <tr>
+      <td class="content">
+
+        <!-- Intro -->
+        <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 24px 0;">
+          This week's guides: {{INTRO_SUMMARY}}. All code is production-tested, MIT licensed, and lives in the <a href="https://github.com/kogunlowo123/citadel-cloud-management" style="color:#0f4c75;">GitHub library</a>.
+        </p>
+
+        <!-- THIS WEEK section -->
+        <p class="section-label">This Week's New Guides</p>
+
+        <!-- ARTICLE 1 — swap content each week -->
+        <div class="article-card">
+          <span class="article-pillar pillar-aws">AWS Infrastructure</span>
+          <h3>{{ARTICLE_1_TITLE}}</h3>
+          <p>{{ARTICLE_1_SUMMARY}}</p>
+          <a class="article-link" href="{{ARTICLE_1_URL}}">Read the full guide</a>
+        </div>
+
+        <!-- ARTICLE 2 -->
+        <div class="article-card">
+          <span class="article-pillar pillar-k8s">Kubernetes</span>
+          <h3>{{ARTICLE_2_TITLE}}</h3>
+          <p>{{ARTICLE_2_SUMMARY}}</p>
+          <a class="article-link" href="{{ARTICLE_2_URL}}">Read the full guide</a>
+        </div>
+
+        <!-- ARTICLE 3 -->
+        <div class="article-card">
+          <span class="article-pillar pillar-devsec">DevSecOps</span>
+          <h3>{{ARTICLE_3_TITLE}}</h3>
+          <p>{{ARTICLE_3_SUMMARY}}</p>
+          <a class="article-link" href="{{ARTICLE_3_URL}}">Read the full guide</a>
+        </div>
+
+        <hr class="divider">
+
+        <!-- PRO TIP -->
+        <div class="checklist">
+          <h4>Pro Tip This Week</h4>
+          <p style="font-size:14px;color:#374151;margin:0 0 10px 0;line-height:1.6;">{{PRO_TIP_TEXT}}</p>
+          <ul>
+            {{PRO_TIP_ITEMS}}
+          </ul>
+        </div>
+
+        <hr class="divider">
+
+        <!-- POPULAR THIS MONTH -->
+        <p class="section-label">Popular in the Library</p>
+
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:0 8px 0 0; width:50%; vertical-align:top;">
+              <div class="article-card" style="margin-bottom:0;">
+                <span class="article-pillar pillar-aws">AWS</span>
+                <h3 style="font-size:14px;">Production AWS VPC with Terraform</h3>
+                <a class="article-link" style="font-size:13px;" href="https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/01-production-vpc-terraform.md">Read guide</a>
+              </div>
+            </td>
+            <td style="padding:0 0 0 8px; width:50%; vertical-align:top;">
+              <div class="article-card" style="margin-bottom:0;">
+                <span class="article-pillar pillar-devsec">DevSecOps</span>
+                <h3 style="font-size:14px;">AWS Security Baseline in 30 Minutes</h3>
+                <a class="article-link" style="font-size:13px;" href="https://github.com/kogunlowo123/citadel-cloud-management/blob/main/citadel-content/blog/08-aws-security-baseline-devsecops.md">Read guide</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <hr class="divider">
+
+        <!-- CTA -->
+        <div class="cta-block">
+          <a class="cta-button" href="https://github.com/kogunlowo123/citadel-cloud-management">
+            Browse All {{ARTICLE_COUNT}}+ Guides on GitHub
+          </a>
+          <p class="cta-sub">Star the repo to get notified of new guides each week</p>
+        </div>
+
+      </td>
+    </tr>
+
+    <!-- FOOTER -->
+    <tr>
+      <td class="footer">
+        <p><strong>Citadel Cloud Management</strong></p>
+        <p>Free production Terraform guides — AWS, Azure, GCP, Kubernetes, DevSecOps, AI/ML</p>
+        <p style="margin-top:12px;">
+          <a href="https://github.com/kogunlowo123/citadel-cloud-management">GitHub</a> ·
+          <a href="https://kogunlowo123.github.io/citadel-cloud-management/">Website</a> ·
+          <a href="https://dev.to/citadelcloud">Dev.to</a>
+        </p>
+        <p style="margin-top:12px;font-size:11px;color:#d1d5db;">
+          You're receiving this because you subscribed to Citadel Cloud Management updates.<br>
+          <a href="{{UNSUBSCRIBE_URL}}" style="color:#d1d5db;">Unsubscribe</a> · MIT Licensed · No spam, ever.
+        </p>
+      </td>
+    </tr>
+
+  </table>
+</div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Citadel Cloud Management — Growth Dashboard
 
-> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: 2026-07-10 (Session 4 — Growth Engineering Sprint)
+> Auto-updated by the daily monitor at 3:47pm CDT. Last updated: 2026-07-11 (Session 5 — Content Expansion + Distribution Assets)
 
 ---
 
@@ -8,8 +8,8 @@
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| Blog articles (pipeline) | 100 | 100 | ✅ TARGET REACHED |
-| Pipeline articles | 5 | 50 | 🟡 In progress |
+| Blog articles (pipeline) | 105 | 100 | ✅ 5 BEYOND TARGET |
+| devto-ready articles | 5 | 20 | 🟡 In progress |
 | Sitemap URLs | Auto via jekyll-sitemap | 50+ | ✅ Workflow active |
 | Social distribution batches | 2 | 10/week | 🟡 Growing |
 | Pillar coverage | 8/8 | 8/8 | ✅ All pillars covered |
@@ -24,10 +24,32 @@
 | Gmail outreach drafts | 10 | — | ✅ Ready to send (HN, Product Hunt, podcasts, more) |
 | GitHub FUNDING.yml | ✅ | — | GitHub Sponsors enabled |
 | GitHub Issue Templates | ✅ | — | Bug report + guide request forms |
+| devto-ready directory | 5 articles | 20 | 🟡 01, 08, 30, 35, 40 ready |
+| SEO: keyword cluster doc | ✅ | — | 5 clusters, gap analysis, GEO strategy |
+| Newsletter HTML template | ✅ | — | Responsive, dark-mode aware, swap vars |
 
 ---
 
 ## 📅 Daily Log
+
+### 2026-07-11 (Session 5 — Content Expansion + Distribution Assets)
+- **Status:** COMPLETE — 5 new articles, 5 devto-ready articles, SEO keyword strategy, newsletter template
+- **Articles added (101–105):**
+  - 101: AWS Lambda SnapStart with Terraform (Java cold start elimination, CRaC hooks)
+  - 102: Migrating from Terraform to OpenTofu (state encryption, provider mocking)
+  - 103: Kubernetes Gateway API with Terraform (replaces Ingress on EKS)
+  - 104: Terraform Drift Detection Automation (GitHub Actions, Slack alerts, auto-remediate)
+  - 105: KEDA Event-Driven Autoscaling on EKS (SQS, Prometheus, cron, ScaledJob)
+- **devto-ready/ directory built (5 articles with Dev.to YAML frontmatter):**
+  - 01-production-vpc-terraform-devto.md
+  - 08-aws-security-baseline-devto.md
+  - 30-aws-bedrock-rag-terraform-devto.md
+  - 35-gcp-bigquery-analytics-terraform-devto.md
+  - 40-gitops-argocd-terraform-devto.md
+- **seo/ directory built:**
+  - keyword-clusters.md — 5 keyword clusters, gap analysis, GEO optimization guide, content velocity targets
+  - newsletter-template.html — responsive HTML email, production-ready with {{SWAP_VARS}}
+- **All files pushed to GitHub** — repo now at 105 articles
 
 ### 2026-07-10 (Session 4 — Growth Engineering Sprint)
 - **Status:** COMPLETE — full SEO + GEO foundation deployed, global distribution pipeline active
