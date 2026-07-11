@@ -1,0 +1,208 @@
+name: Dev.to Account Setup — Stage 2 (Verify + Extract API Key)
+
+on:
+  workflow_dispatch:
+    inputs:
+      verification_url:
+        description: "Paste the verification URL from the Dev.to email"
+        required: true
+        type: string
+
+jobs:
+  verify-and-extract:
+    name: Verify Email + Get API Key
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -g playwright@1.44.0
+          npx playwright install chromium
+
+      - name: Verify email and extract API key
+        id: extract
+        run: |
+          cat > /tmp/devto_verify.js << 'JSEOF'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+            const context = await browser.newContext();
+            const page = await context.newPage();
+
+            const verifyUrl = process.env.VERIFICATION_URL;
+            console.log('Navigating to verification URL...');
+            await page.goto(verifyUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+            await page.screenshot({ path: '/tmp/devto_verify_01.png' });
+            console.log('Post-verify URL:', page.url());
+            console.log('Post-verify title:', await page.title());
+
+            // If redirected to login, sign in
+            if (page.url().includes('/enter') || page.url().includes('sign_in') || page.url().includes('login')) {
+              console.log('Redirected to login — signing in...');
+              const emailInput = await page.$('input[name="user[email]"], input[type="email"]');
+              const passwordInput = await page.$('input[name="user[password]"], input[type="password"]');
+
+              if (emailInput && passwordInput) {
+                await emailInput.fill('citadelcloudmanagement@gmail.com');
+                await passwordInput.fill(process.env.DEVTO_PASSWORD);
+                const submitBtn = await page.$('button[type="submit"]');
+                if (submitBtn) {
+                  await submitBtn.click();
+                  await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => {});
+                }
+              }
+            }
+
+            await page.screenshot({ path: '/tmp/devto_verify_02_loggedin.png' });
+            console.log('After auth URL:', page.url());
+
+            // Navigate to settings > account to get API key
+            console.log('Navigating to settings/account for API key...');
+            await page.goto('https://dev.to/settings/account', { waitUntil: 'domcontentloaded', timeout: 20000 });
+            await page.screenshot({ path: '/tmp/devto_verify_03_settings.png' });
+
+            // Look for API key section
+            let apiKey = '';
+
+            // Dev.to shows API key under settings/account or settings/extensions
+            const pageText = await page.textContent('body');
+            console.log('Settings page URL:', page.url());
+
+            if (pageText.includes('API Key') || pageText.includes('api key')) {
+              // Try to find existing key or generate one
+              const keyInputs = await page.$$('input[value], code');
+              for (const el of keyInputs) {
+                const val = await el.getAttribute('value') || await el.textContent();
+                if (val && val.length > 20 && /^[a-zA-Z0-9_-]+$/.test(val.trim())) {
+                  apiKey = val.trim();
+                  console.log('Found potential API key (length):', apiKey.length);
+                  break;
+                }
+              }
+
+              // Try to generate a new key if none found
+              if (!apiKey) {
+                const generateBtn = await page.$('button:has-text("Generate"), button:has-text("New API Key"), input[value*="Generate"]');
+                if (generateBtn) {
+                  await generateBtn.click();
+                  await page.waitForTimeout(2000);
+                  const keyAfterGen = await page.$('input[value], code');
+                  if (keyAfterGen) {
+                    const val = await keyAfterGen.getAttribute('value') || await keyAfterGen.textContent();
+                    if (val && val.length > 20) apiKey = val.trim();
+                  }
+                }
+              }
+            }
+
+            // Also try /settings/extensions which hosts API keys on newer dev.to
+            if (!apiKey) {
+              await page.goto('https://dev.to/settings/extensions', { waitUntil: 'domcontentloaded', timeout: 15000 });
+              await page.screenshot({ path: '/tmp/devto_verify_04_extensions.png' });
+              const extText = await page.textContent('body');
+              if (extText.includes('API Key') || extText.includes('DEV API')) {
+                const inputs = await page.$$('input[readonly], input[type="text"][value]');
+                for (const inp of inputs) {
+                  const val = await inp.getAttribute('value');
+                  if (val && val.length > 20) { apiKey = val.trim(); break; }
+                }
+              }
+            }
+
+            if (apiKey) {
+              console.log('API_KEY_FOUND');
+              // Write to file for next step to read (never log full key)
+              require('fs').writeFileSync('/tmp/devto_api_key.txt', apiKey);
+              console.log('API key length:', apiKey.length, 'chars — saved to file');
+            } else {
+              console.log('API_KEY_NOT_FOUND — see screenshots for manual extraction');
+              const finalText = await page.textContent('body').catch(() => '');
+              console.log('Page snippet:', finalText.substring(0, 400));
+            }
+
+            await browser.close();
+          })();
+          JSEOF
+
+          node /tmp/devto_verify.js
+        env:
+          VERIFICATION_URL: ${{ inputs.verification_url }}
+          DEVTO_PASSWORD: ${{ secrets.DEVTO_PASSWORD }}
+
+      - name: Store API key as GitHub secret
+        if: success()
+        run: |
+          if [ ! -f /tmp/devto_api_key.txt ]; then
+            echo "No API key file found — skipping secret set"
+            exit 0
+          fi
+
+          API_KEY=$(cat /tmp/devto_api_key.txt)
+          KEY_LEN=${#API_KEY}
+          echo "Setting DEV_TO_API_KEY secret (${KEY_LEN} chars)..."
+
+          # Install sodium for encryption
+          pip install PyNaCl -q
+
+          python3 - << PYEOF
+          import requests, base64, os, sys
+          from nacl import encoding, public
+
+          token = os.environ['GH_TOKEN']
+          repo  = "kogunlowo123/citadel-cloud-management"
+          api_key = open('/tmp/devto_api_key.txt').read().strip()
+
+          # Get repo public key
+          r = requests.get(
+            f"https://api.github.com/repos/{repo}/actions/secrets/public-key",
+            headers={"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+          )
+          pk_data = r.json()
+          pub_key_b64 = pk_data["key"]
+          key_id      = pk_data["key_id"]
+
+          # Encrypt
+          pub_key_bytes = base64.b64decode(pub_key_b64)
+          box = public.SealedBox(public.PublicKey(pub_key_bytes))
+          encrypted = base64.b64encode(box.encrypt(api_key.encode())).decode()
+
+          # Set secret
+          resp = requests.put(
+            f"https://api.github.com/repos/{repo}/actions/secrets/DEV_TO_API_KEY",
+            headers={"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"},
+            json={"encrypted_value": encrypted, "key_id": key_id}
+          )
+          if resp.status_code in (201, 204):
+            print("SUCCESS: DEV_TO_API_KEY secret set!")
+          else:
+            print(f"FAILED: {resp.status_code} {resp.text}")
+            sys.exit(1)
+          PYEOF
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devto-verify-screenshots
+          path: /tmp/devto_verify_*.png
+          retention-days: 1
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f /tmp/devto_api_key.txt ]; then
+            echo "## ✅ Dev.to API Key Set" >> $GITHUB_STEP_SUMMARY
+            echo "DEV_TO_API_KEY has been saved as a GitHub Actions secret." >> $GITHUB_STEP_SUMMARY
+            echo "The global-distribution workflow will now auto-publish weekly." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ API Key Not Found Automatically" >> $GITHUB_STEP_SUMMARY
+            echo "Check the screenshots artifact for the settings page." >> $GITHUB_STEP_SUMMARY
+            echo "Manually copy your API key from https://dev.to/settings/extensions" >> $GITHUB_STEP_SUMMARY
+            echo "Then add it at: https://github.com/kogunlowo123/citadel-cloud-management/settings/secrets/actions" >> $GITHUB_STEP_SUMMARY
+          fi

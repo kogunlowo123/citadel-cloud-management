@@ -1,0 +1,124 @@
+name: Dev.to Account Setup — Stage 1 (Signup)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  signup:
+    name: Create Dev.to Account
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -g playwright@1.44.0
+          npx playwright install chromium
+
+      - name: Sign up for Dev.to
+        id: signup
+        run: |
+          cat > /tmp/devto_signup.js << 'JSEOF'
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+            const page = await browser.newPage();
+
+            console.log('Opening dev.to signup page...');
+            await page.goto('https://dev.to/enter?state=new-user', { waitUntil: 'domcontentloaded', timeout: 20000 });
+            await page.screenshot({ path: '/tmp/devto_01_landing.png' });
+
+            console.log('Page title:', await page.title());
+            console.log('URL:', page.url());
+
+            // Check what signup options are available
+            const bodyText = await page.textContent('body');
+            console.log('Has email signup:', bodyText.includes('Email'));
+            console.log('Has GitHub OAuth:', bodyText.includes('Continue with GitHub') || bodyText.includes('Sign up with GitHub'));
+
+            // Try email-based signup
+            const emailInput = await page.$('#user_email, input[name="user[email]"], input[type="email"]');
+            const passwordInput = await page.$('#user_password, input[name="user[password]"], input[type="password"]');
+
+            if (emailInput && passwordInput) {
+              console.log('Found email+password form');
+
+              // Fill name if present
+              const nameInput = await page.$('#user_name, input[name="user[name]"]');
+              if (nameInput) {
+                await nameInput.fill('Citadel Cloud Management');
+                console.log('Filled name');
+              }
+
+              // Fill username if present
+              const usernameInput = await page.$('#user_username, input[name="user[username]"]');
+              if (usernameInput) {
+                await usernameInput.fill('citadelcloud');
+                console.log('Filled username');
+              }
+
+              await emailInput.fill('citadelcloudmanagement@gmail.com');
+              await passwordInput.fill(process.env.DEVTO_PASSWORD);
+              console.log('Filled email and password');
+
+              await page.screenshot({ path: '/tmp/devto_02_filled.png' });
+
+              // Submit
+              const submitBtn = await page.$('button[type="submit"], input[type="submit"], button:has-text("Sign up")');
+              if (submitBtn) {
+                await submitBtn.click();
+                console.log('Clicked submit');
+                await page.waitForTimeout(3000);
+              }
+            } else {
+              console.log('No email form found — checking page structure...');
+              // Log all inputs
+              const inputs = await page.$$eval('input', els => els.map(e => `${e.type}|${e.name}|${e.id}|${e.placeholder}`));
+              console.log('Inputs:', inputs.join('\n'));
+            }
+
+            await page.screenshot({ path: '/tmp/devto_03_after.png' });
+            console.log('Post-submit URL:', page.url());
+            console.log('Post-submit title:', await page.title());
+
+            // Check for success indicators
+            const afterText = await page.textContent('body').catch(() => '');
+            const hasError = afterText.includes('error') || afterText.includes('invalid') || afterText.includes('taken');
+            const hasSuccess = afterText.includes('confirmation') || afterText.includes('verify') || afterText.includes('check your email') || afterText.includes('Welcome');
+
+            if (hasSuccess) {
+              console.log('RESULT: SUCCESS - check email for verification');
+            } else if (hasError) {
+              console.log('RESULT: ERROR detected in page');
+              console.log('Page text snippet:', afterText.substring(0, 500));
+            } else {
+              console.log('RESULT: UNKNOWN - page text:', afterText.substring(0, 300));
+            }
+
+            await browser.close();
+          })();
+          JSEOF
+
+          node /tmp/devto_signup.js
+        env:
+          DEVTO_PASSWORD: ${{ secrets.DEVTO_PASSWORD }}
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devto-signup-screenshots
+          path: /tmp/devto_*.png
+          retention-days: 1
+
+      - name: Print next steps
+        run: |
+          echo ""
+          echo "========================================="
+          echo "NEXT STEP: Check citadelcloudmanagement@gmail.com"
+          echo "for a verification email from dev.to"
+          echo ""
+          echo "Then trigger: devto-verify.yml"
+          echo "with the verification URL from the email"
+          echo "========================================="
