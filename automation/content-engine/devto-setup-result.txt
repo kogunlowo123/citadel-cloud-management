@@ -1,0 +1,54 @@
+=== STEP 1: Try login with kogunlowo@gmail.com ===
+Login submit: clicked: Log in
+After login URL: https://dev.to/users/sign_in
+After login text(500): 
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 16
+BLOCKED_UNVERIFIED_EMAIL — account exists but email not verified
+Check kogunlowo@gmail.com for Dev.to confirmation email
+
+=== STEP 2: Signup with kogunlowo@gmail.com ===
+Signup toggle: "Sign up with Email"
+Signup fill: {"email":true,"pw":true,"name":true,"username":true,"pwConf":true}
+Signup submit: regForm: Sign up
+After signup URL: https://dev.to/users/sign_up?state=email_signup
+After signup text(500): 
+      
+      
+        if (navigator.userAgent === 'ForemWebView/1' || window.frameElement) {
+          document.body.classList.add("hidden-shell");
+        }
+          if (new Date() > new Date("2026-02-04T09:00:00-05:00")) {
+            document.body.dataset.sideNavVisible = "false";
+          } 
+      
+
+      
+
+
+
+      
+        
+          :root {
+            --accent-brand-lighter-rgb: 86, 105, 285;
+            --accent-brand-rgb: 64, 78, 211;
+            --accent-brand-darker-rgb: 51, 62, 16
+SIGNUP_SUCCESS_EMAIL_SENT — check kogunlowo@gmail.com for verification email
